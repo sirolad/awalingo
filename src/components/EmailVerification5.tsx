@@ -31,7 +31,7 @@ export default function EmailVerification5() {
             src="/assets/email-verification/email-verified.png"
             alt="Email verified illustration"
             fill
-            className="object-contain"
+            className="object-contain dark:invert dark:brightness-110"
             priority
           />
         </div>
