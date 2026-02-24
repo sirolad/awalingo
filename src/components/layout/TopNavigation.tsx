@@ -104,7 +104,9 @@ export function TopNavigation() {
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
         >
           <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">{APP_NAME[0]}</span>
+            <span className="text-black font-bold text-sm dark:text-white ">
+              {APP_NAME[0]}
+            </span>
           </div>
           <span className="heading-6 text-neutral-950 dark:text-neutral-50">
             {APP_NAME}
