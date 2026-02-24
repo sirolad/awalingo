@@ -602,7 +602,7 @@ export default function DictionaryPage() {
                         src="/assets/dictionary/404.png"
                         alt="No Results"
                         fill
-                        className="object-contain"
+                        className="object-contain dark:invert dark:brightness-110"
                         priority
                       />
                     </div>

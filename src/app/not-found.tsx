@@ -12,7 +12,7 @@ export default function NotFound() {
           alt="Page not found"
           width={400}
           height={300}
-          className="mx-auto"
+          className="mx-auto dark:invert dark:brightness-110"
           priority
         />
 

@@ -71,7 +71,7 @@ export default function EmailVerification1() {
             src="/assets/email-verification/account-created.png"
             alt="Account created illustration"
             fill
-            className="object-contain"
+            className="object-contain dark:invert dark:brightness-110"
             priority
           />
         </div>
