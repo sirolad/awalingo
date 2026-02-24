@@ -595,26 +595,26 @@ export default function DictionaryPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="bg-white dark:bg-neutral-900 rounded-3xl md:rounded-[2rem] lg:rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-soft p-8 md:p-10 lg:p-12 text-center col-span-full items-center justify-center"
+                    className="bg-white dark:bg-neutral-900 rounded-3xl md:rounded-[2rem] lg:rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-soft p-10 md:p-16 lg:p-24 text-center col-span-full flex flex-col items-center justify-center min-h-[600px] w-full"
                   >
-                    {/* <Book className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 text-neutral-400 mx-auto mb-4 md:mb-6 lg:mb-8" /> */}
-                    <Image
-                      src="/assets/dictionary/404.png"
-                      alt="No Results"
-                      width={400}
-                      height={600}
-                      className="object-contain mx-auto mb-4 md:mb-6 lg:mb-8"
-                      priority
-                    />
-                    <div className="mb-2">
-                      <h3 className="heading-3 text-neutral-800 dark:text-neutral-200 mb-2 md:mb-3 lg:mb-4">
+                    <div className="relative w-full max-w-[400px] md:max-w-[700px] lg:max-w-4xl aspect-[21/9] mb-8 md:mb-12 lg:mb-16">
+                      <Image
+                        src="/assets/dictionary/404.png"
+                        alt="No Results"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+                    <div className="mb-6 max-w-4xl">
+                      <h3 className="heading-3 md:heading-2 lg:heading-1 text-neutral-800 dark:text-neutral-200 mb-4 md:mb-6 lg:mb-8">
                         Word Not Found
                       </h3>
+                      <p className="body-base md:body-large lg:text-2xl text-neutral-600 dark:text-neutral-400 mb-8 md:mb-12">
+                        Kindly nominate a word for your community to suggest
+                        Neos for it.
+                      </p>
                     </div>
-                    <p className="body-base lg:body-large text-neutral-600 dark:text-neutral-400 max-w-md mx-auto mb-4 md:mb-6">
-                      Kindly nominate a word for your community to suggest Neos
-                      for it.
-                    </p>
                     {searchQuery && (
                       <Button
                         variant="outline"
