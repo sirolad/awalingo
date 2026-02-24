@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { APP_NAME } from '@/lib/brand';
 
 export default function EmailVerification5() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function EmailVerification5() {
             </h1>
             <p className="text-[16px] md:text-[18px] lg:text-[20px] font-normal leading-[20px] md:leading-[24px] lg:leading-[28px] text-[#656565] font-[Metropolis] max-w-md md:max-w-lg lg:max-w-xl mx-auto">
               Your email address has been verified. You can now access all
-              features of your Neolingo account.
+              features of your {APP_NAME} account.
             </p>
           </div>
 

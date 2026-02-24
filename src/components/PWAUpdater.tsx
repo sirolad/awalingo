@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { APP_NAME } from '@/lib/brand';
 
 export default function PWAUpdater() {
   useEffect(() => {
@@ -19,8 +20,7 @@ export default function PWAUpdater() {
       // Listen for controller change (meaning a new worker has activated)
       const handleControllerChange = () => {
         toast.info('New version available', {
-          description:
-            'A new version of Neolingo is available. Reload to update.',
+          description: `A new version of ${APP_NAME} is available. Reload to update.`,
           action: {
             label: 'Reload',
             onClick: () => window.location.reload(),
