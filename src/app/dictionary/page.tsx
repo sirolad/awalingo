@@ -465,7 +465,7 @@ export default function DictionaryPage() {
               </span>
             </button>
             <span className="heading-4 text-neutral-950 dark:text-neutral-50">
-              NeoDiko {userNeoCommunity ? `${userNeoCommunity.name}` : ''}
+              AwaDiko {userNeoCommunity ? `${userNeoCommunity.name}` : ''}
             </span>
             <div className="flex-shrink-0">
               <LanguageSwitchTag
@@ -538,7 +538,7 @@ export default function DictionaryPage() {
             </span>
           </button>
           <span className="heading-4 text-neutral-950 dark:text-neutral-50">
-            NeoDiko {userNeoCommunity ? `${userNeoCommunity.name}` : ''}
+            AwaDiko {userNeoCommunity ? `${userNeoCommunity.name}` : ''}
           </span>
           <div className="flex-shrink-0">
             <LanguageSwitchTag
@@ -582,7 +582,7 @@ export default function DictionaryPage() {
                       definition={`${word.definition}`}
                       languageName={
                         activeLanguage === 'english'
-                          ? userNeoCommunity?.name || 'NeoLingo'
+                          ? userNeoCommunity?.name || 'Awalingo'
                           : 'English'
                       }
                       index={index}
