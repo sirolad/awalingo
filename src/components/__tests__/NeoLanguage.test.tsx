@@ -47,7 +47,7 @@ describe('NeoLanguage Component', () => {
     render(<NeoLanguage languages={mockLanguages} initialSelectedId={null} />);
 
     expect(
-      screen.getByText('Choose Your NeoLingo Community')
+      screen.getByText('Choose Your Awalingo Community')
     ).toBeInTheDocument();
     expect(screen.getByText('Yoruba')).toBeInTheDocument();
     expect(screen.getByText('Igbo')).toBeInTheDocument();
