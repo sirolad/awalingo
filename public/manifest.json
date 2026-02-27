@@ -1,6 +1,6 @@
 {
-  "name": "Neolingo - Mothertongue Rescue",
-  "short_name": "Neolingo",
+  "name": "Awalingo - Mother-tongue Rescue",
+  "short_name": "Awalingo",
   "description": "A collaborative platform for learning and expanding the Low Resource Language dictionaries",
   "start_url": "/home",
   "display": "standalone",
@@ -66,22 +66,6 @@
           "sizes": "any"
         }
       ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/desktop-home.png",
-      "sizes": "1280x800",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Neolingo home screen on desktop"
-    },
-    {
-      "src": "/screenshots/mobile-home.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Neolingo home screen on mobile"
     }
   ]
 }
