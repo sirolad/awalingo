@@ -248,7 +248,7 @@ export default function SuggestPage() {
                     Suggestion Submitted!
                   </h1>
                   <p className="body-base lg:body-large text-neutral-600 dark:text-neutral-400 mb-6 md:mb-8 lg:mb-10 max-w-md mx-auto">
-                    Thank you for contributing to the Neolingo community. Your
+                    Thank you for contributing to the Awalingo community. Your
                     suggestion will be reviewed and made available for voting
                     soon.
                   </p>

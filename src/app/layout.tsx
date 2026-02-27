@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { APP_NAME, APP_TITLE } from '@/lib/brand';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -90,14 +91,14 @@ const metropolis = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Neolingo - Mothertongue Rescue ',
+  title: APP_TITLE,
   description:
     'A collaborative platform for learning and expanding the Low Resource Language dictionaries',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Neolingo',
+    title: APP_NAME,
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -109,14 +110,14 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: 'Neolingo',
-    title: 'Neolingo - Mothertongue Rescue',
+    siteName: APP_NAME,
+    title: APP_TITLE,
     description:
       'A collaborative platform for learning and expanding the Low Resource Language dictionaries',
   },
   twitter: {
     card: 'summary',
-    title: 'Neolingo - Mothertongue Rescue',
+    title: APP_TITLE,
     description:
       'A collaborative platform for learning and expanding the Low Resource Language dictionaries',
   },

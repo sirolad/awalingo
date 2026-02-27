@@ -41,7 +41,7 @@ export function NeoDicoWord({
           </div>
           <div className="mb-1">
             <em className="body-base text-[#A30202] dark:text-red-400 mr-1">
-              NeoDiko {languageName}:
+              AwaDiko {languageName}:
             </em>
             <span className="body-base font-medium text-[#111111CC] dark:text-neutral-300">
               {translation}

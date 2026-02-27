@@ -42,7 +42,7 @@ export default function Onboarding1() {
                 src="/assets/onboarding/onboarding-1.png"
                 alt="Curate words illustration"
                 fill
-                className="object-contain"
+                className="object-contain dark:invert dark:brightness-110"
                 priority
               />
             </div>
