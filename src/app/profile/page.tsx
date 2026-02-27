@@ -221,14 +221,14 @@ export default function ProfilePage() {
                       Community
                     </h4>
 
-                    {/* Neolingo Community */}
+                    {/* Awalingo Community */}
                     <div className="flex items-center justify-between cursor-pointer p-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl transition-colors group">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
                           <Megaphone className="w-4 h-4" />
                         </div>
                         <span className="body-small font-medium text-neutral-700 dark:text-neutral-300">
-                          Neolingo Community
+                          Awalingo Community
                         </span>
                       </div>
                       <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md">

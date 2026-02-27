@@ -93,7 +93,8 @@ describe('Permission System', () => {
       expect(permissions).toContain('create:requests');
       expect(permissions).toContain('vote:suggestions');
       expect(permissions).toContain('view:admin');
-      expect(permissions).toHaveLength(5);
+      expect(permissions).toContain('rate:neos');
+      expect(permissions).toHaveLength(6);
     });
 
     it('should return correct permissions for JUROR', () => {
@@ -102,8 +103,9 @@ describe('Permission System', () => {
       expect(permissions).toContain('create:requests');
       expect(permissions).toContain('vote:suggestions');
       expect(permissions).toContain('view:admin');
+      expect(permissions).toContain('rate:neos');
       expect(permissions).not.toContain('manage:users');
-      expect(permissions).toHaveLength(4);
+      expect(permissions).toHaveLength(5);
     });
 
     it('should return correct permissions for CONTRIBUTOR', () => {

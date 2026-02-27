@@ -38,7 +38,7 @@ export default function Onboarding5() {
                 src="/assets/onboarding/onboarding-5.png"
                 alt="Vote for words illustration"
                 fill
-                className="object-contain"
+                className="object-contain dark:invert dark:brightness-110"
                 priority
               />
             </div>

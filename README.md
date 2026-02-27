@@ -1,10 +1,10 @@
-# Neolingo App
+# Awalingo App
 
 [![CI](https://github.com/sirolad/neolingo-app/actions/workflows/ci.yml/badge.svg)](https://github.com/sirolad/neolingo-app/actions/workflows/ci.yml)
 [![Deploy](https://github.com/sirolad/neolingo-app/actions/workflows/deploy.yml/badge.svg)](https://github.com/sirolad/neolingo-app/actions/workflows/deploy.yml)
 [![Dependency Update](https://github.com/sirolad/neolingo-app/actions/workflows/dependency-update.yml/badge.svg)](https://github.com/sirolad/neolingo-app/actions/workflows/dependency-update.yml)
 
-A modern, community-driven language learning platform built with **Next.js 16**. Neolingo empowers communities to preserve and expand their languages through a curated dictionary, voting system, and gamified learning experience.
+A modern, community-driven language learning platform built with **Next.js 16**. Awalingo empowers communities to preserve and expand their languages through a curated dictionary, voting system, and gamified learning experience.
 
 This project is bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
