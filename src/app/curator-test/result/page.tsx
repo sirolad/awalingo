@@ -49,7 +49,7 @@ function ResultContent() {
               }
               alt={passed ? 'Success illustration' : 'Failure illustration'}
               fill
-              className="object-contain"
+              className="object-contain dark:invert dark:brightness-110"
               priority
             />
           </div>

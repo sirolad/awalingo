@@ -42,7 +42,7 @@ export default function Onboarding4() {
                 src="/assets/onboarding/onboarding-4.png"
                 alt="Suggest words illustration"
                 fill
-                className="object-contain"
+                className="object-contain dark:invert dark:brightness-110"
                 priority
               />
             </div>

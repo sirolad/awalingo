@@ -97,7 +97,7 @@ const createPlaceholderIcon = size => {
     </defs>
     <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="url(#grad)"/>
     <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2.5}" fill="white" opacity="0.9"/>
-    <text x="${size / 2}" y="${size / 2 + size / 8}" font-family="Arial, sans-serif" font-size="${size / 4}" font-weight="bold" text-anchor="middle" fill="url(#grad)">N</text>
+    <text x="${size / 2}" y="${size / 2 + size / 8}" font-family="Arial, sans-serif" font-size="${size / 4}" font-weight="bold" text-anchor="middle" fill="url(#grad)">A</text>
   </svg>`;
 
   return Buffer.from(svg);

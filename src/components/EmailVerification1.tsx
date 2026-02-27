@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { APP_NAME } from '@/lib/brand';
 
 export default function EmailVerification1() {
   const router = useRouter();
@@ -70,7 +71,7 @@ export default function EmailVerification1() {
             src="/assets/email-verification/account-created.png"
             alt="Account created illustration"
             fill
-            className="object-contain"
+            className="object-contain dark:invert dark:brightness-110"
             priority
           />
         </div>
@@ -83,8 +84,7 @@ export default function EmailVerification1() {
               Account Created!
             </h1>
             <p className="text-[15px] md:text-[17px] lg:text-[19px] font-normal leading-[21px] md:leading-[25px] lg:leading-[28px] text-[rgba(17,17,17,0.8)] font-[Metropolis] max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-              Your Neolingo account have successfully created! Verify your email
-              address to proceed.
+              {`Your ${APP_NAME} account has been successfully created! Verify your email address to proceed.`}
             </p>
           </div>
 
