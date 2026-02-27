@@ -31,7 +31,7 @@ class AiReviewActions {
         model: openai('gpt-4o-mini'),
         output: Output.object({ schema: ReviewResultSchema }),
         prompt: `
-        You are a strict linguistic curator for a dictionary app called Neolingo.
+        You are a strict linguistic curator for a dictionary app called Awalingo.
         Your task is to review a "Translation Request" where a user asks for a translation of a specific word.
 
         Word: "${request.word}"

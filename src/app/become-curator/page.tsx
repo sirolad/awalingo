@@ -39,7 +39,7 @@ export default function BecomeCuratorPage() {
               src="/assets/dictionary/curator.png"
               alt="Become a Curator illustration"
               fill
-              className="object-contain dark:brightness-200"
+              className="object-contain dark:invert dark:brightness-110"
               priority
             />
           </div>
