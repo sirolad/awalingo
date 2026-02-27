@@ -1,7 +1,0 @@
-
-  <!-- This is a placeholder. In production, replace with actual 144x144 PNG -->
-  <svg width="144" height="144" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="72" cy="72" r="70" fill="#3B82F6"/>
-    <circle cx="72" cy="72" r="48" fill="white"/>
-    <text x="72" y="84" font-family="Arial" font-size="28.8" font-weight="bold" text-anchor="middle" fill="#3B82F6">N</text>
-  </svg>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOnboardingSeen } from '@/lib/onboarding';
+import { APP_NAME } from '@/lib/brand';
 
 export default function SplashPage() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function SplashPage() {
         className="text-center"
       >
         <h1 className="text-4xl md:text-6xl font-bold text-foreground tracking-tight">
-          Neolingo
+          {APP_NAME}
         </h1>
       </motion.div>
 
