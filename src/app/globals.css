@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Neolingo Brand Colors */
+  /* Awalingo Brand Colors */
   --radius: 0.75rem;
   --background: #fafafa;
   --foreground: #171717;

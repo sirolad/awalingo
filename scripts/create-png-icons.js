@@ -92,7 +92,7 @@ const createIconFile = size => {
   <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
     <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="#3B82F6"/>
     <circle cx="${size / 2}" cy="${size / 2}" r="${size / 3}" fill="white"/>
-    <text x="${size / 2}" y="${size / 2 + size / 12}" font-family="Arial" font-size="${size / 5}" font-weight="bold" text-anchor="middle" fill="#3B82F6">N</text>
+    <text x="${size / 2}" y="${size / 2 + size / 12}" font-family="Arial" font-size="${size / 5}" font-weight="bold" text-anchor="middle" fill="#3B82F6">A</text>
   </svg>`;
 
   return Buffer.from(simpleIcon);
