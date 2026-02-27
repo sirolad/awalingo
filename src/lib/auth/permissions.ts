@@ -1,5 +1,5 @@
 /**
- * Permission-based access control system for Neolingo
+ * Permission-based access control system for Awalingo
  *
  * This module defines the core permission types and role-permission mappings
  * used throughout the application for authorization checks.
@@ -33,6 +33,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'create:requests',
     'vote:suggestions',
     'view:admin',
+    'rate:neos',
   ],
   JUROR: [
     'review:requests',

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { setMyTargetLanguage } from '@/actions/language';
+import { APP_NAME } from '@/lib/brand';
 import { ReactCountryFlag } from 'react-country-flag';
 
 interface NeoLanguageOption {
@@ -90,7 +91,7 @@ export default function NeoLanguage({
               </div>
 
               <h1 className="text-[24px] font-medium leading-[29px] text-[#292929] font-[Parkinsans] mb-2">
-                Choose Your NeoLingo Community
+                {`Choose Your ${APP_NAME} Community`}
               </h1>
               <p className="text-[14px] font-normal leading-[14px] text-[#656565] font-[Metropolis]">
                 Rep your mother tongue.
