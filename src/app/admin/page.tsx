@@ -366,7 +366,7 @@ export default function AdminPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <button
-                onClick={() => router.push('/curator/review')}
+                onClick={() => router.push('/admin/requests')}
                 className="bg-white dark:bg-neutral-900 rounded-2xl p-5 shadow-sm border border-neutral-100 dark:border-neutral-800 flex items-center gap-4 hover:shadow-md hover:border-neutral-200 dark:hover:border-neutral-700 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
