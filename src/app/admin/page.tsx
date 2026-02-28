@@ -39,9 +39,15 @@ const NAV_ITEMS = [
     active: true,
   },
   {
+    label: 'Dictionary Concepts',
+    icon: BookOpen,
+    href: '/admin/dictionary-concepts',
+    active: true,
+  },
+  {
     label: 'Review Requests',
     icon: ClipboardList,
-    href: '/curator/review',
+    href: '/admin/requests',
     active: true,
   },
   {

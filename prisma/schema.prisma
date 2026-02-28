@@ -102,7 +102,7 @@ model PartOfSpeech {
 
 model Concept {
   id        Int      @id @default(autoincrement())
-  gloss     String? // Universal explanation of the concept
+  gloss     String? @unique // Universal explanation of the concept
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

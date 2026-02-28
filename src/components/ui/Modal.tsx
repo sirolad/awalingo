@@ -7,11 +7,14 @@ export function Modal(
   title: JSX.Element,
   body: JSX.Element,
   onClose?: () => void,
-  showclose: boolean = true
+  showclose: boolean = true,
+  className?: string
 ) {
   return (
-    <div className="fixed inset-0 bg-[#111111CC] bg-opacity-[0.5] overflow-y-auto h-full w-full flex items-center justify-center">
-      <div className="py-8 px-4 border w-90 shadow-lg rounded-md bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800">
+    <div className="fixed inset-0 bg-[#111111CC] bg-opacity-[0.5] overflow-y-auto h-full w-full flex items-center justify-center z-50">
+      <div
+        className={`py-8 px-4 border ${className || 'w-90'} shadow-lg rounded-md bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800`}
+      >
         <div className="text-center dark:text-neutral-50 dark:">
           <div className="text-[24px] font-[500] text-[#111111CC] dark:text-[#FFFFFFCC] justify-center flex">
             {title}
