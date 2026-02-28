@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Vote, Lightbulb, Book, Home, BookPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -30,6 +31,7 @@ function NavItem({ icon, label, active = false, onClick }: NavItemProps) {
 export function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
+  const { can } = useAuth();
 
   const navItems = [
     {
@@ -49,8 +51,13 @@ export function BottomNavigation() {
     },
     {
       icon: <Vote className="w-5 h-5" />,
-      label: pathname === '/vote' ? 'Vote' : '',
-      href: '/vote',
+      label:
+        pathname === '/vote'
+          ? 'Vote'
+          : can('rate:neos') && pathname === '/jury'
+            ? 'Jury'
+            : '',
+      href: can('rate:neos') ? '/jury' : '/vote',
     },
     {
       icon: <Lightbulb className="w-5 h-5" />,
@@ -76,7 +83,10 @@ export function BottomNavigation() {
           icon={item.icon}
           label={item.label}
           href={item.href}
-          active={pathname === item.href}
+          active={
+            pathname === item.href ||
+            (pathname === '/vote' && can('rate:neos') && item.href === '/jury')
+          }
           onClick={() => handleNavigation(item.href)}
         />
       ))}

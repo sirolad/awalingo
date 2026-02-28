@@ -44,7 +44,7 @@ function NavItem({ icon, label, active = false, onClick }: NavItemProps) {
 export function TopNavigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const { appUser, logout, userRole, userNeoCommunity } = useAuth();
+  const { appUser, logout, userRole, userNeoCommunity, can } = useAuth();
   const user = appUser;
 
   const navItems = [
@@ -60,8 +60,8 @@ export function TopNavigation() {
     },
     {
       icon: <Vote className="w-5 h-5" />,
-      label: 'Vote',
-      href: '/vote',
+      label: can('rate:neos') ? 'Jury' : 'Vote',
+      href: can('rate:neos') ? '/jury' : '/vote',
     },
     {
       icon: <Book className="w-5 h-5" />,

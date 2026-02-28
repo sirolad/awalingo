@@ -113,7 +113,7 @@ export default function HomePage() {
                           word="Your jury dashboard"
                           ctaText="Go to dashboard"
                           variant="jury"
-                          onHandleClick={() => handleCta('/jury')}
+                          onHandleClick={() => handleCta('/jury?wordoftheday')}
                         />
                       ) : (
                         <CtaCard
@@ -122,7 +122,9 @@ export default function HomePage() {
                           word={wordCards[0].word}
                           ctaText="Word of the day"
                           variant="suggest"
-                          onHandleClick={() => handleCta('/suggest')}
+                          onHandleClick={() =>
+                            handleCta('/suggest?wordoftheday')
+                          }
                         />
                       )}
                       {/* Voting Card */}
@@ -132,7 +134,7 @@ export default function HomePage() {
                         word={wordCards[1].word}
                         ctaText="Word of the day"
                         variant="vote"
-                        onHandleClick={() => handleCta('/vote')}
+                        onHandleClick={() => handleCta('/vote?wordoftheday')}
                       />
                     </div>
 
