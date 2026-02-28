@@ -94,11 +94,12 @@ export default function JuryPage() {
     { neoId: number; value: number }[]
   >([]);
 
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
   const searchParams = useSearchParams();
-  const wordOfTheDay = searchParams.has('wordoftheday');
-  const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
 
   useEffect(() => {
+    const wordOfTheDay = searchParams.has('wordoftheday');
+    setIsWordOfTheDay(wordOfTheDay);
     if (authLoading) return;
 
     if (!appUser) {

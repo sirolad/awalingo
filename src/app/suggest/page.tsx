@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useActionState, useEffect, useRef, useState } from 'react';
+import React, { use, useActionState, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Brain,
@@ -48,6 +48,7 @@ export default function SuggestPage() {
   const [modalTitle, setModalTitle] = useState(<></>);
   const [modalBody, setModalBody] = useState(<></>);
   const [loadSuggestionsTrigger, setLoadSuggestionsTrigger] = useState(true);
+  const { isLoading: authLoading } = useAuth();
   const [suggestions, setSuggestions] = useState<
     {
       type: string;
@@ -62,6 +63,15 @@ export default function SuggestPage() {
     message: '',
   });
   const prevStateRef = useRef(state);
+  const searchParams = useSearchParams();
+  const wordOfTheDay = searchParams.has('wordoftheday');
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
+
+  useEffect(() => {
+    const wordOfTheDay = searchParams.has('wordoftheday');
+    setIsWordOfTheDay(wordOfTheDay);
+    if (authLoading) return;
+  }, [authLoading]);
 
   useEffect(() => {
     const fetchTerms = async () => {
@@ -79,6 +89,9 @@ export default function SuggestPage() {
         );
         if (fetchedTerms.length > 0) {
           setTerms(fetchedTerms);
+          if (isWordOfTheDay) {
+            setOneTerm(fetchedTerms[0]);
+          }
         }
       }
       setLoadSuggestionsTrigger(false);
@@ -172,6 +185,7 @@ export default function SuggestPage() {
 
   const setOneTerm = async (t: Term) => {
     setSuggestions([]);
+    setIsWordOfTheDay(false);
     setTerm(t);
     if (t?._count?.neos >= 5) {
       toast(
@@ -339,7 +353,7 @@ export default function SuggestPage() {
                         term?.concept?.gloss || 'No definition available.'
                       }
                       partOfSpeech={term?.partOfSpeech?.name || 'nouns'}
-                      showWordOfTheDay={false}
+                      showWordOfTheDay={isWordOfTheDay}
                     />
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -537,7 +551,7 @@ export default function SuggestPage() {
                     term?.concept?.gloss || 'No definition available.'
                   }
                   partOfSpeech={term?.partOfSpeech?.name || 'nouns'}
-                  showWordOfTheDay={false}
+                  showWordOfTheDay={isWordOfTheDay}
                 />
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
