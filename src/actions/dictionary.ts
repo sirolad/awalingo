@@ -14,7 +14,7 @@ export async function submitRequest(
   try {
     const result = await requireAuth();
     user = result.user;
-  } catch (_error) {
+  } catch {
     return {
       message: 'Unauthorized: Please sign in to submit a request',
       success: false,
@@ -59,13 +59,11 @@ export async function submitRequest(
   } = validatedFields.data;
 
   try {
-    // 1. Check if word already exists in TranslationRequest table
+    // 1. Check if word + meaning already exists in TranslationRequest table
     const existingRequest = await prisma.translationRequest.findFirst({
       where: {
-        word: {
-          equals: word,
-          mode: 'insensitive',
-        },
+        word: { equals: word, mode: 'insensitive' },
+        meaning: { equals: meaning, mode: 'insensitive' },
         sourceLanguageId,
         targetLanguageId,
         partOfSpeechId,
@@ -75,7 +73,7 @@ export async function submitRequest(
     if (existingRequest) {
       return {
         message:
-          'This word has already been requested for translation. Please Be Patient.',
+          'This word with the same meaning has already been requested. Please be patient.',
         success: false,
         errors: {
           word: ['This word already has a pending translation request.'],
@@ -83,22 +81,19 @@ export async function submitRequest(
       };
     }
 
-    // 2. Check if word already exists in Terms table
+    // 2. Check if word + meaning already exists in Terms table (single languageId)
     const existingTerm = await prisma.term.findFirst({
       where: {
-        text: {
-          equals: word,
-          mode: 'insensitive',
-        },
-        sourceLanguageId,
-        targetLanguageId,
-        partOfSpeechId,
+        text: { equals: word, mode: 'insensitive' },
+        meaning: { equals: meaning, mode: 'insensitive' },
+        languageId: sourceLanguageId,
       },
     });
 
     if (existingTerm) {
       return {
-        message: 'This word already exists in the dictionary.',
+        message:
+          'This word with the same meaning already exists in the dictionary.',
         success: false,
         errors: {
           word: ['This word already exists in the dictionary.'],
@@ -110,7 +105,6 @@ export async function submitRequest(
     const domainRecords = [];
     if (domainNames && domainNames.length > 0) {
       for (const domainName of domainNames) {
-        // Find existing domain or create new one
         let domain = await prisma.domain.findUnique({
           where: { name: domainName },
         });
@@ -124,7 +118,7 @@ export async function submitRequest(
       }
     }
 
-    // 4. Create the Translation Request with verified user ID
+    // 4. Create the Translation Request
     await prisma.translationRequest.create({
       data: {
         word,
@@ -132,7 +126,7 @@ export async function submitRequest(
         sourceLanguageId,
         targetLanguageId,
         partOfSpeechId,
-        userId: user.id, // Use server-verified user ID
+        userId: user.id,
         domains: {
           create: domainRecords.map(domain => ({
             domain: {
@@ -156,6 +150,54 @@ export async function submitRequest(
       success: false,
     };
   }
+}
+
+export interface DictionaryTerm {
+  id: number;
+  text: string;
+  meaning: string;
+  phonics: string | null;
+  partOfSpeech: string;
+  domains: string[];
+  /** Sibling term text in the other language, resolved via conceptId */
+  translation: string | null;
+}
+
+/**
+ * Fetch all Terms for a given language, alphabetically ordered.
+ * The `translation` field resolves the sibling term in `communityLanguageId`
+ * via the shared conceptId — powering the dictionary page language switch.
+ */
+export async function getDictionaryTerms(
+  languageId: number,
+  communityLanguageId: number
+): Promise<DictionaryTerm[]> {
+  const terms = await prisma.term.findMany({
+    where: { languageId },
+    orderBy: { text: 'asc' },
+    include: {
+      partOfSpeech: true,
+      domains: { include: { domain: true } },
+      concept: {
+        include: {
+          terms: {
+            where: { languageId: communityLanguageId },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  return terms.map(term => ({
+    id: term.id,
+    text: term.text,
+    meaning: term.meaning,
+    phonics: term.phonics,
+    partOfSpeech: term.partOfSpeech.name,
+    domains: term.domains.map(d => d.domain.name),
+    translation: term.concept.terms[0]?.text ?? null,
+  }));
 }
 
 export async function getUserProfileForRequest(userId: string) {

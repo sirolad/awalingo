@@ -10,7 +10,6 @@ import { RequestForm } from '@/components/dictionary/RequestForm';
 import { Layout } from '@/components/layout/Layout';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { normalizeUser } from '@/lib/user';

@@ -27,21 +27,28 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { getQuizQuestionCount } from '@/actions/quiz';
 import { getTotalUserCount } from '@/actions/auth';
 import { getPendingReviewsCount } from '@/actions/review';
+import { getTotalAdminTermCount } from '@/actions/admin-terms';
 
 // ─── Sidebar nav items ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, href: '/admin', active: true },
   { label: 'Users', icon: Users, href: '/admin/users', active: false },
   {
-    label: 'Dictionary',
+    label: 'Dictionary Terms',
     icon: BookOpen,
-    href: '/admin/dictionary',
-    active: false,
+    href: '/admin/dictionary-terms',
+    active: true,
+  },
+  {
+    label: 'Dictionary Concepts',
+    icon: BookOpen,
+    href: '/admin/dictionary-concepts',
+    active: true,
   },
   {
     label: 'Review Requests',
     icon: ClipboardList,
-    href: '/curator/review',
+    href: '/admin/requests',
     active: true,
   },
   {
@@ -73,7 +80,8 @@ const NAV_ITEMS = [
 // ─── Metric card data (placeholder) ──────────────────────────────────────────
 const getMetricsBase = (
   userCount: number | string,
-  pendingCount: number | string
+  pendingCount: number | string,
+  termCount: number | string
 ) => [
   {
     label: 'Total Users',
@@ -99,8 +107,8 @@ const getMetricsBase = (
       'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400',
   },
   {
-    label: 'Contributions',
-    value: '—',
+    label: 'Dictionary Entries',
+    value: termCount,
     trend: null,
     icon: TrendingUp,
     color:
@@ -116,6 +124,7 @@ export default function AdminPage() {
   const [questionCount, setQuestionCount] = useState<number | string>('—');
   const [userCount, setUserCount] = useState<number | string>('—');
   const [pendingCount, setPendingCount] = useState<number | string>('—');
+  const [termCount, setTermCount] = useState<number | string>('—');
 
   useEffect(() => {
     if (authLoading) return;
@@ -129,14 +138,16 @@ export default function AdminPage() {
     }
 
     const fetchDashboardMetrics = async () => {
-      const [qcRes, ucRes, prRes] = await Promise.all([
+      const [qcRes, ucRes, prRes, tcRes] = await Promise.all([
         getQuizQuestionCount(),
         getTotalUserCount(),
         getPendingReviewsCount(),
+        getTotalAdminTermCount(),
       ]);
       if (qcRes.success) setQuestionCount(qcRes.count!);
       if (ucRes.success) setUserCount(ucRes.count!);
       if (prRes.success) setPendingCount(prRes.count!);
+      if (tcRes.success) setTermCount(tcRes.count!);
     };
     fetchDashboardMetrics();
   }, [appUser, authLoading, can, router]);
@@ -144,7 +155,7 @@ export default function AdminPage() {
   if (authLoading || !appUser) return null;
 
   const dashboardMetrics = [
-    ...getMetricsBase(userCount, pendingCount),
+    ...getMetricsBase(userCount, pendingCount, termCount),
     {
       label: 'Question Bank',
       value: questionCount,
@@ -360,7 +371,7 @@ export default function AdminPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <button
-                onClick={() => router.push('/curator/review')}
+                onClick={() => router.push('/admin/requests')}
                 className="bg-white dark:bg-neutral-900 rounded-2xl p-5 shadow-sm border border-neutral-100 dark:border-neutral-800 flex items-center gap-4 hover:shadow-md hover:border-neutral-200 dark:hover:border-neutral-700 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
