@@ -2,7 +2,7 @@
 
 import React, { use, useActionState, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Brain,
@@ -63,15 +63,9 @@ export default function SuggestPage() {
     message: '',
   });
   const prevStateRef = useRef(state);
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const wordOfTheDay = searchParams.has('wordoftheday');
   const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
-
-  useEffect(() => {
-    const wordOfTheDay = searchParams.has('wordoftheday');
-    setIsWordOfTheDay(wordOfTheDay);
-    if (authLoading) return;
-  }, [authLoading]);
 
   useEffect(() => {
     const fetchTerms = async () => {

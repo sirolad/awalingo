@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Vote,
   ArrowLeft,
@@ -49,12 +49,11 @@ export default function VotePage() {
   const [term, setTerm] = useState<Term>({} as Term);
   const [terms, setTerms] = useState<Term[]>([]);
   const [loadSuggestionsTrigger, setLoadSuggestionsTrigger] = useState(true);
-  const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
+  const wordOfTheDay = searchParams.has('wordoftheday');
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
 
   useEffect(() => {
-    const wordOfTheDay = searchParams.has('wordoftheday');
-    setIsWordOfTheDay(wordOfTheDay);
     if (authLoading) return;
 
     if (!appUser) {
