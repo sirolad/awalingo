@@ -12,10 +12,7 @@ import { LanguageSwitchTag } from '@/components/ui/LanguageSwitchTag';
 import { NeoDicoWord } from '@/components/ui/NeoDicoWord';
 import { DictionaryPageSkeleton } from '@/components/dictionary/DictionaryPageSkeleton';
 import Image from 'next/image';
-import {
-  getDictionaryTerms,
-  type DictionaryTerm,
-} from '@/actions/dictionary';
+import { getDictionaryTerms, type DictionaryTerm } from '@/actions/dictionary';
 
 // English language ID is deterministic (seeded with code 'eng').
 // We resolve it server-side inside getDictionaryTerms, but for the page we
@@ -27,13 +24,23 @@ export default function DictionaryPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [words, setWords] = useState<DictionaryTerm[]>([]);
-  const [englishLanguageId, setEnglishLanguageId] = useState<number | null>(null);
+  const [englishLanguageId, setEnglishLanguageId] = useState<number | null>(
+    null
+  );
   const [currentAlphabet, setCurrentAlphabet] = useState('A');
   const [activeLanguage, setActiveLanguage] = useState<'community' | 'english'>(
     'community'
   );
-  const alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const getActiveWord = useCallback((word: DictionaryTerm) => word.text, []);
 
+  const getSecondaryWord = useCallback(
+    (word: DictionaryTerm) => word.translation ?? '',
+    []
+  );
+
+  const alphabets = Array.from(
+    new Set(words.map(w => getActiveWord(w).charAt(0).toUpperCase()))
+  ).sort((a, b) => a.localeCompare(b));
   const handleGoBack = () => {
     router.push('/home');
   };
@@ -41,8 +48,20 @@ export default function DictionaryPage() {
   const loadTerms = useCallback(
     async (primaryLanguageId: number, secondaryLanguageId: number) => {
       setLoading(true);
-      const data = await getDictionaryTerms(primaryLanguageId, secondaryLanguageId);
+      const data = await getDictionaryTerms(
+        primaryLanguageId,
+        secondaryLanguageId
+      );
       setWords(data);
+
+      // Auto-select the first available alphabet letter if any words exist
+      if (data.length > 0) {
+        const firstLetter = getActiveWord(data[0]).charAt(0).toUpperCase();
+        setCurrentAlphabet(firstLetter);
+      } else {
+        setCurrentAlphabet('');
+      }
+
       setLoading(false);
     },
     []
@@ -70,10 +89,6 @@ export default function DictionaryPage() {
         loadTerms(communityId, communityId);
       });
   }, [router, appUser, authLoading, userNeoCommunity, loadTerms]);
-
-  const getActiveWord = (word: DictionaryTerm) => word.text;
-
-  const getSecondaryWord = (word: DictionaryTerm) => word.translation ?? '';
 
   const toggleLanguage = () => {
     if (!userNeoCommunity || !englishLanguageId) return;
@@ -223,7 +238,17 @@ export default function DictionaryPage() {
                           : 'English'
                       }
                       index={index}
-                      translations={word.translation ? [{ id: String(word.id), communityWord: word.translation, votes: 0 }] : []}
+                      translations={
+                        word.translation
+                          ? [
+                              {
+                                id: String(word.id),
+                                communityWord: word.translation,
+                                votes: 0,
+                              },
+                            ]
+                          : []
+                      }
                     />
                   ))
                 ) : (

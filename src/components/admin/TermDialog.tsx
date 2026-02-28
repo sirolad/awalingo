@@ -17,7 +17,7 @@ import {
 } from '@/actions/catalog';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const termSchema = z.object({
@@ -129,13 +129,13 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
 
   const meaningValue = watch('meaning');
   const conceptIdValue = watch('conceptId');
+  const [conceptSearch, setConceptSearch] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      // If we already have a conceptId and the meaning matches exactly, don't search
-      if (meaningValue && !conceptIdValue && meaningValue.length > 2) {
+      if (conceptSearch.length > 2) {
         setIsSearchingConcepts(true);
-        getAdminConcepts({ search: meaningValue, take: 5 }).then(res => {
+        getAdminConcepts({ search: conceptSearch, take: 5 }).then(res => {
           if (res.success && res.concepts) {
             setConceptResults(
               res.concepts.map(c => ({ id: c.id, gloss: c.gloss }))
@@ -151,27 +151,18 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [meaningValue, conceptIdValue]);
+  }, [conceptSearch]);
 
-  // If user edits meaning after selecting a concept, drop the conceptId
+  const [selectedConceptGloss, setSelectedConceptGloss] = useState<
+    string | null
+  >(null);
+
+  // If we open an existing term, pre-populate its concept representation
   useEffect(() => {
-    if (conceptIdValue && termToEdit?.meaning !== meaningValue) {
-      // Check if it's the exact gloss we just selected, otherwise nullify
-      const matchedSelected = conceptResults.find(
-        c => c.id === conceptIdValue && c.gloss === meaningValue
-      );
-      if (!matchedSelected && !isEditing) {
-        setValue('conceptId', null);
-      }
+    if (termToEdit?.conceptId && termToEdit?.concept) {
+      setSelectedConceptGloss(termToEdit.concept.gloss);
     }
-  }, [
-    meaningValue,
-    conceptIdValue,
-    conceptResults,
-    setValue,
-    isEditing,
-    termToEdit,
-  ]);
+  }, [termToEdit]);
 
   // Filter domains based on input
   useEffect(() => {
@@ -279,58 +270,87 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
             placeholder="e.g. A state of tranquility"
             className={`w-full py-3 px-4 rounded-xl border bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 resize-none ${errors.meaning ? 'border-red-500' : 'border-neutral-200 dark:border-neutral-800'}`}
             {...register('meaning')}
-            onFocus={() => {
-              if (conceptResults.length > 0) setShowConceptDropdown(true);
-            }}
-            onBlur={() => {
-              // Delay hiding to allow click events on dropdown to fire
-              setTimeout(() => setShowConceptDropdown(false), 200);
-            }}
           />
-          {isSearchingConcepts && (
-            <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
-          )}
         </div>
+      </div>
 
-        {/* Dropdown for Concepts */}
-        {showConceptDropdown && conceptResults.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-            {conceptResults.map(concept => (
-              <div
-                key={concept.id}
-                className="px-4 py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm flex items-center justify-between"
-                onClick={() => {
-                  setValue('meaning', concept.gloss);
-                  setValue('conceptId', concept.id);
-                  setShowConceptDropdown(false);
-                }}
-              >
-                <span className="text-neutral-900 dark:text-neutral-100">
-                  {concept.gloss}
-                </span>
-                <span className="text-xs text-neutral-400 font-mono">
-                  #{concept.id}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="space-y-1 relative">
+        <label className="body-small font-medium text-neutral-900 dark:text-neutral-100 flex items-center justify-between">
+          <span>Concept (Optional)</span>
+          {conceptIdValue && (
+            <button
+              type="button"
+              className="text-xs text-neutral-500 hover:text-red-500 hover:underline"
+              onClick={() => {
+                setValue('conceptId', null);
+                setSelectedConceptGloss(null);
+                setConceptSearch('');
+              }}
+            >
+              (Clear Concept)
+            </button>
+          )}
+        </label>
 
         {conceptIdValue ? (
-          <p className="body-xs text-green-600 dark:text-green-500 mt-1">
-            ✓ Linked to existing Concept #{conceptIdValue}
-          </p>
-        ) : meaningValue &&
-          meaningValue.length > 2 &&
-          !isSearchingConcepts &&
-          !showConceptDropdown ? (
-          <p className="body-xs text-neutral-500 mt-1">
-            + Will create new concept
-          </p>
-        ) : null}
+          <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-start gap-2">
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5" />
+            <div>
+              <p className="body-small font-semibold text-green-800 dark:text-green-300">
+                Linked to Concept #{conceptIdValue}
+              </p>
+              <p className="text-sm text-green-700 dark:text-green-400">
+                {selectedConceptGloss}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search existing concepts..."
+              className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              value={conceptSearch}
+              onChange={e => setConceptSearch(e.target.value)}
+              autoComplete="off"
+            />
+            {isSearchingConcepts && (
+              <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+            )}
 
-        {errors.meaning && (
-          <p className="body-xs text-red-500">{errors.meaning.message}</p>
+            {/* Dropdown for Concepts */}
+            {showConceptDropdown && conceptResults.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                {conceptResults.map(concept => (
+                  <div
+                    key={concept.id}
+                    className="px-4 py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm flex items-center justify-between"
+                    onClick={() => {
+                      setValue('conceptId', concept.id);
+                      setSelectedConceptGloss(concept.gloss);
+                      setConceptSearch('');
+                      setShowConceptDropdown(false);
+                      // Auto-fill meaning if it's currently empty
+                      if (!meaningValue || meaningValue.trim() === '') {
+                        setValue('meaning', concept.gloss);
+                      }
+                    }}
+                  >
+                    <span className="text-neutral-900 dark:text-neutral-100">
+                      {concept.gloss}
+                    </span>
+                    <span className="text-xs text-neutral-400 font-mono">
+                      #{concept.id}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="body-xs text-neutral-500 mt-1">
+              Leave blank, and a new concept will be created automatically using
+              the Meaning provided above.
+            </p>
+          </div>
         )}
       </div>
 

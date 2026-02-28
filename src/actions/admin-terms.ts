@@ -14,6 +14,7 @@ export interface AdminTermData {
   partOfSpeech: { id: number; name: string };
   domains: { domain: { id: number; name: string } }[];
   conceptId: number;
+  concept: { id: number; gloss: string };
   voteScore: number;
   createdAt: Date;
 }
@@ -55,6 +56,7 @@ export async function getAdminTerms({
           domains: {
             include: { domain: { select: { id: true, name: true } } },
           },
+          concept: { select: { id: true, gloss: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,

@@ -7,7 +7,7 @@ import {
   getAdminTerms,
   bulkAddAdminTerms,
 } from '@/actions/admin-terms';
-import { getTargetLanguages } from '@/actions/language';
+import { getSourceLanguages } from '@/actions/catalog';
 import { Button } from '@/components/ui/Button';
 import { SearchBar } from '@/components/ui/SearchBar';
 import {
@@ -58,10 +58,10 @@ export function AdminTermList() {
   const [selectedTerm, setSelectedTerm] = useState<AdminTermData | null>(null);
 
   const fetchLanguages = useCallback(async () => {
-    const result = await getTargetLanguages();
-    if (result.success && result.data.length > 0) {
-      setLanguages(result.data);
-      setSelectedLanguageId(result.data[0].id);
+    const langs = await getSourceLanguages();
+    if (langs && langs.length > 0) {
+      setLanguages(langs as unknown as LanguageColumns[]);
+      setSelectedLanguageId(langs[0].id);
     }
   }, []);
 
@@ -219,7 +219,7 @@ export function AdminTermList() {
       {/* Global Settings */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-neutral-100 dark:border-neutral-800 mb-8 mt-4">
         <label className="block heading-6 text-neutral-900 dark:text-neutral-100 mb-3">
-          Target Language
+          Language
         </label>
         <Select
           value={String(selectedLanguageId)}
@@ -466,7 +466,7 @@ export function AdminTermList() {
                   <em>"Science, Medicine"</em>).
                 </li>
                 <li>
-                  Words will be assigned to the <strong>Target Language</strong>{' '}
+                  Words will be assigned to the <strong>Language</strong>{' '}
                   selected above.
                 </li>
                 <li>
