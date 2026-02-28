@@ -10,6 +10,7 @@ import {
   LogOut,
   CircleUserRound,
   BookPlus,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -85,6 +86,10 @@ export function TopNavigation() {
 
   const handleProfile = () => {
     router.push('/profile');
+  };
+
+  const handleAdmin = () => {
+    router.push('/admin');
   };
 
   return (
@@ -205,6 +210,15 @@ export function TopNavigation() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
+                {can && can('view:admin') && (
+                  <button
+                    onClick={handleAdmin}
+                    title="Admin Dashboard"
+                    className="p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-neutral-600 dark:text-neutral-400"
+                  >
+                    <ShieldCheck className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-neutral-600 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400"

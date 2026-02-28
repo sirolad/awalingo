@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
 import { revalidatePath } from 'next/cache';
+import { Authorized } from '@/lib/auth/decorators';
 
 export interface QuizOption {
   label: string;
@@ -194,24 +195,20 @@ export async function getCuratorTestQuestions(userId: string) {
   }
 }
 
-export async function canUserTakeQuiz(userId: string) {
-  try {
-    // 1. Ensure user is an EXPLORER
-    const userRole = await prisma.userRole.findFirst({
-      where: { userId },
-      include: { role: true },
-    });
+export interface QuizEligibilityResult {
+  success: boolean;
+  canTake?: boolean;
+  reason?: string | null;
+  eligibleAt?: Date;
+  error?: string;
+  roleName?: string;
+}
 
-    if (userRole?.role.name !== 'EXPLORER') {
-      return {
-        success: false,
-        canTake: false,
-        reason: 'User is already a curator or admin.',
-        roleName: userRole?.role.name,
-      };
-    }
-
-    // 2. Check for recent failures (last 14 days)
+class QuizEligibility {
+  @Authorized('take:quiz')
+  static async check(userId: string): Promise<QuizEligibilityResult> {
+    // Permission is guaranteed by decorator
+    // Check for recent failures (last 14 days)
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
@@ -238,6 +235,27 @@ export async function canUserTakeQuiz(userId: string) {
     }
 
     return { success: true, canTake: true, reason: null };
+  }
+}
+
+export async function canUserTakeQuiz(
+  userId: string
+): Promise<QuizEligibilityResult> {
+  try {
+    const result = await QuizEligibility.check(userId);
+    
+    // Check if the decorator blocked access
+    if (!result.success && result.error && !Object.prototype.hasOwnProperty.call(result, 'canTake')) {
+      return {
+        success: false,
+        canTake: false,
+        reason: 'User is already a curator or admin.',
+        roleName: undefined, // Role name not directly returned by standard error
+        eligibleAt: undefined,
+      };
+    }
+    
+    return result as QuizEligibilityResult;
   } catch (error) {
     console.error('Failed to check quiz eligibility:', error);
     return {
