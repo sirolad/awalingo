@@ -449,3 +449,19 @@ export async function bulkAddAdminTerms(terms: BulkUploadTermInput[]) {
     return { success: false, error: 'Database error during bulk import' };
   }
 }
+
+export async function getTotalAdminTermCount(): Promise<{
+  success: boolean;
+  count: number;
+}> {
+  try {
+    const { user } = await requireAuth();
+    if (!user) throw new Error('Unauthorized');
+
+    const count = await prisma.term.count();
+    return { success: true, count };
+  } catch (err) {
+    console.error('Failed to get total term count:', err);
+    return { success: false, count: 0 };
+  }
+}

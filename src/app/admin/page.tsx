@@ -27,6 +27,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { getQuizQuestionCount } from '@/actions/quiz';
 import { getTotalUserCount } from '@/actions/auth';
 import { getPendingReviewsCount } from '@/actions/review';
+import { getTotalAdminTermCount } from '@/actions/admin-terms';
 
 // ─── Sidebar nav items ────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -79,7 +80,8 @@ const NAV_ITEMS = [
 // ─── Metric card data (placeholder) ──────────────────────────────────────────
 const getMetricsBase = (
   userCount: number | string,
-  pendingCount: number | string
+  pendingCount: number | string,
+  termCount: number | string
 ) => [
   {
     label: 'Total Users',
@@ -105,8 +107,8 @@ const getMetricsBase = (
       'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400',
   },
   {
-    label: 'Contributions',
-    value: '—',
+    label: 'Dictionary Entries',
+    value: termCount,
     trend: null,
     icon: TrendingUp,
     color:
@@ -122,6 +124,7 @@ export default function AdminPage() {
   const [questionCount, setQuestionCount] = useState<number | string>('—');
   const [userCount, setUserCount] = useState<number | string>('—');
   const [pendingCount, setPendingCount] = useState<number | string>('—');
+  const [termCount, setTermCount] = useState<number | string>('—');
 
   useEffect(() => {
     if (authLoading) return;
@@ -135,14 +138,16 @@ export default function AdminPage() {
     }
 
     const fetchDashboardMetrics = async () => {
-      const [qcRes, ucRes, prRes] = await Promise.all([
+      const [qcRes, ucRes, prRes, tcRes] = await Promise.all([
         getQuizQuestionCount(),
         getTotalUserCount(),
         getPendingReviewsCount(),
+        getTotalAdminTermCount(),
       ]);
       if (qcRes.success) setQuestionCount(qcRes.count!);
       if (ucRes.success) setUserCount(ucRes.count!);
       if (prRes.success) setPendingCount(prRes.count!);
+      if (tcRes.success) setTermCount(tcRes.count!);
     };
     fetchDashboardMetrics();
   }, [appUser, authLoading, can, router]);
@@ -150,7 +155,7 @@ export default function AdminPage() {
   if (authLoading || !appUser) return null;
 
   const dashboardMetrics = [
-    ...getMetricsBase(userCount, pendingCount),
+    ...getMetricsBase(userCount, pendingCount, termCount),
     {
       label: 'Question Bank',
       value: questionCount,
