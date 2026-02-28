@@ -28,10 +28,10 @@ export function CtaCard({
         >
           {/* Card Header */}
           <div className="p-6 md:p-8 lg:p-10 pb-4 md:pb-6 lg:pb-8">
-            <span className="text-[14px] md:text-2xl lg:text-3xl font-bold text-neutral-950 dark:text-neutral-50 mb-1 md:mb-2">
+            <span className="card-title md:heading-4 lg:heading-3 text-neutral-950 dark:text-neutral-50 mb-1 md:mb-2">
               {title}
             </span>
-            <p className="text-neutral-600 dark:text-neutral-400 text-[12px] md:text-base lg:text-lg">
+            <p className="body-small md:body-base lg:body-large text-neutral-600 dark:text-neutral-400">
               {subTitle}
             </p>
           </div>
@@ -42,7 +42,7 @@ export function CtaCard({
           >
             <div className="flex items-center justify-between mb-3 md:mb-4 lg:mb-6">
               <div
-                className={`px-3 md:px-4 lg:px-5 py-1 md:py-1.5 lg:py-2 rounded-full text-xs md:text-sm lg:text-base font-medium bg-[#f0f0f0] dark:bg-[#1a1a1a] text-[#292929] dark:text-[#f0f0f0]`}
+                className={`px-3 md:px-4 lg:px-5 py-1 md:py-1.5 lg:py-2 rounded-full body-xs md:body-small lg:body-base font-medium bg-[#f0f0f0] dark:bg-[#1a1a1a] text-[#292929] dark:text-[#f0f0f0]`}
               >
                 {ctaText || 'Your dashboard'}
               </div>
@@ -53,12 +53,12 @@ export function CtaCard({
                 leftIcon={
                   <Gavel className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
                 }
-                className="h-8 md:h-10 lg:h-12 px-4 md:px-6 lg:px-8 rounded-2xl md:rounded-3xl text-xs md:text-sm lg:text-base font-medium hover:scale-105 active:scale-95 transition-transform"
+                className="h-8 md:h-10 lg:h-12 px-4 md:px-6 lg:px-8 rounded-2xl md:rounded-3xl body-xs md:body-small lg:body-base font-semibold hover:scale-105 active:scale-95 transition-transform"
               >
                 Dashboard
               </Button>
             </div>
-            <span className="text-2xl md:text-3xl lg:text-4xl font-light text-neutral-950 dark:text-neutral-50">
+            <span className="heading-4 md:heading-3 lg:heading-2 font-light text-neutral-950 dark:text-neutral-50">
               {word}
             </span>
           </div>

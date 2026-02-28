@@ -56,25 +56,68 @@ class ReviewActions {
     const { user } = await requireAuth();
 
     try {
-      await prisma.translationRequest.update({
-        where: { id: requestId },
-        data: {
-          status,
-          approvedById: status === 'APPROVED' ? user.id : null,
-          rejectionReason: reason,
-        },
-      });
+      if (status === 'APPROVED') {
+        // Run promotion inside a transaction
+        await prisma.$transaction(async tx => {
+          const request = await tx.translationRequest.findUnique({
+            where: { id: requestId },
+            include: { domains: true },
+          });
 
-      // Log the review action for audit trail
-      await logAudit({
-        userId: user.id,
-        action: `review:request:${status.toLowerCase()}`,
-        resourceId: requestId.toString(),
-        metadata: { reason },
-      });
+          if (!request) throw new Error('Request not found');
+
+          // 1. Create a new Concept — gloss = meaning as language-agnostic anchor
+          const concept = await tx.concept.create({
+            data: { gloss: request.meaning ?? undefined },
+          });
+
+          // 2. Promote word to Term (sourceLanguageId → languageId)
+          await tx.term.create({
+            data: {
+              text: request.word,
+              languageId: request.sourceLanguageId,
+              meaning: request.meaning ?? request.word, // meaning is required
+              partOfSpeechId: request.partOfSpeechId,
+              conceptId: concept.id,
+              domains: {
+                create: request.domains.map(d => ({
+                  domain: { connect: { id: d.domainId } },
+                })),
+              },
+            },
+          });
+
+          // 3. Delete the request — superseded by the Term
+          await tx.translationRequest.delete({ where: { id: requestId } });
+        });
+
+        await logAudit({
+          userId: user.id,
+          action: 'review:request:approved',
+          resourceId: requestId.toString(),
+          metadata: {},
+        });
+      } else {
+        // REJECTED — keep the record, update status and reason
+        await prisma.translationRequest.update({
+          where: { id: requestId },
+          data: {
+            status,
+            rejectionReason: reason,
+          },
+        });
+
+        await logAudit({
+          userId: user.id,
+          action: 'review:request:rejected',
+          resourceId: requestId.toString(),
+          metadata: { reason },
+        });
+      }
 
       revalidatePath('/admin/requests');
       revalidatePath('/home');
+      revalidatePath('/dictionary');
       return { success: true };
     } catch (error) {
       console.error('Failed to review request:', error);

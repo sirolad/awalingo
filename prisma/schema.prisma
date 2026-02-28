@@ -76,8 +76,7 @@ model Language {
   metadata     Json? // For LRL community info
 
   // Relations
-  sourceTerms    Term[]               @relation("SourceLanguage")
-  targetTerms    Term[]               @relation("TargetLanguage")
+  terms          Term[]
   sourceRequests TranslationRequest[] @relation("SourceLanguageRequest")
   targetRequests TranslationRequest[] @relation("TargetLanguageRequest")
   userLanguages  UserTargetLanguage[]
@@ -117,13 +116,12 @@ model Term {
   id   Int    @id @default(autoincrement())
   text String
 
-  // Source language (e.g., English word "Peace")
-  sourceLanguageId Int
-  sourceLanguage   Language @relation("SourceLanguage", fields: [sourceLanguageId], references: [id])
+  // The language this term belongs to
+  languageId Int
+  language   Language @relation(fields: [languageId], references: [id])
 
-  // Target language (e.g., Yoruba translation "Alafia")
-  targetLanguageId Int
-  targetLanguage   Language @relation("TargetLanguage", fields: [targetLanguageId], references: [id])
+  meaning String  // Required: definition in this language (makes term unique)
+  phonics String? // Optional: phonetic pronunciation guide
 
   partOfSpeechId Int
   partOfSpeech   PartOfSpeech @relation(fields: [partOfSpeechId], references: [id])
@@ -131,13 +129,15 @@ model Term {
   conceptId Int
   concept   Concept @relation(fields: [conceptId], references: [id])
 
-  neos           Neo[]
+  domains   DomainsOnTerms[]
+  neos      Neo[]
   votes     Vote[]
-  voteScore Int    @default(0) // Cached score for sorting
+  voteScore Int @default(0) // Cached score for sorting
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@unique([text, languageId, meaning])
   @@map("terms")
 }
 
@@ -174,8 +174,20 @@ model Domain {
   id       Int                 @id @default(autoincrement())
   name     String              @unique
   requests DomainsOnRequests[]
+  terms    DomainsOnTerms[]
 
   @@map("domains")
+}
+
+model DomainsOnTerms {
+  termId   Int
+  term     Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  domainId Int
+  domain   Domain @relation(fields: [domainId], references: [id])
+
+  @@id([termId, domainId])
+  @@map("domains_on_terms")
 }
 
 enum RequestStatus {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, BookPlus, SortDescIcon } from 'lucide-react';
@@ -12,31 +12,22 @@ import { LanguageSwitchTag } from '@/components/ui/LanguageSwitchTag';
 import { NeoDicoWord } from '@/components/ui/NeoDicoWord';
 import { DictionaryPageSkeleton } from '@/components/dictionary/DictionaryPageSkeleton';
 import Image from 'next/image';
+import {
+  getDictionaryTerms,
+  type DictionaryTerm,
+} from '@/actions/dictionary';
 
-interface DictionaryWord {
-  id: string;
-  translation: string;
-  englishWord: string;
-  definition: string;
-  context?: string;
-  category: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  isFavorite: boolean;
-  usage: number;
-  translations?: {
-    id: string;
-    communityWord: string;
-    audioUrl?: string;
-    votes: number;
-  }[];
-}
-
+// English language ID is deterministic (seeded with code 'eng').
+// We resolve it server-side inside getDictionaryTerms, but for the page we
+// need it to swap the active language. Fetched once on mount.
+// need it to swap the active language. Fetched once on mount.
 export default function DictionaryPage() {
   const router = useRouter();
   const { appUser, isLoading: authLoading, userNeoCommunity } = useAuth();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [words, setWords] = useState<DictionaryWord[]>([]);
+  const [words, setWords] = useState<DictionaryTerm[]>([]);
+  const [englishLanguageId, setEnglishLanguageId] = useState<number | null>(null);
   const [currentAlphabet, setCurrentAlphabet] = useState('A');
   const [activeLanguage, setActiveLanguage] = useState<'community' | 'english'>(
     'community'
@@ -47,406 +38,53 @@ export default function DictionaryPage() {
     router.push('/home');
   };
 
-  useEffect(() => {
-    // Wait for auth check to complete
-    if (authLoading) return;
+  const loadTerms = useCallback(
+    async (primaryLanguageId: number, secondaryLanguageId: number) => {
+      setLoading(true);
+      const data = await getDictionaryTerms(primaryLanguageId, secondaryLanguageId);
+      setWords(data);
+      setLoading(false);
+    },
+    []
+  );
 
+  useEffect(() => {
+    if (authLoading) return;
     if (!appUser) {
       router.push('/signin');
       return;
     }
+    if (!userNeoCommunity) return;
 
-    loadDictionaryWords();
-    setLoading(false);
-  }, [router, appUser, authLoading]);
+    const communityId = Number(userNeoCommunity.id);
 
-  const loadDictionaryWords = () => {
-    const mockWords: DictionaryWord[] = [
-      {
-        id: '1',
-        translation: 'Bookumaaki',
-        englishWord: 'BookMark',
-        definition:
-          'A piece of thick paper, leather, or plastic that you put between the pages of a book so that you can find a page again quickly.',
-        context: 'I use a bookmark to save my place in the book',
-        category: 'abstract',
-        difficulty: 'beginner',
-        isFavorite: true,
-        usage: 245,
-        translations: [
-          {
-            id: '1a',
-            communityWord: 'Bookumaaki',
-            audioUrl: 'https://example.com/audio/bookumaaki.mp3',
-            votes: 10,
-          },
-          {
-            id: '1b',
-            communityWord: 'Booki',
-            audioUrl: 'https://example.com/audio/booki.mp3',
-            votes: 7,
-          },
-          {
-            id: '1c',
-            communityWord: 'Booko',
-            audioUrl: 'https://example.com/audio/booko.mp3',
-            votes: 5,
-          },
-        ],
-      },
-      {
-        id: '2',
-        translation: 'Igo',
-        englishWord: 'Bottle',
-        definition:
-          'A container, typically made of glass or plastic, with a narrow neck, used for storing drinks or other liquids',
-        context: 'She drank water from the bottle',
-        category: 'abstract',
-        difficulty: 'intermediate',
-        isFavorite: false,
-        usage: 189,
-        translations: [
-          {
-            id: '2a',
-            communityWord: 'Igo',
-            audioUrl: 'https://example.com/audio/igo.mp3',
-            votes: 8,
-          },
-          {
-            id: '2b',
-            communityWord: 'Igolu',
-            audioUrl: 'https://example.com/audio/igolu.mp3',
-            votes: 6,
-          },
-        ],
-      },
-      {
-        id: '3',
-        translation: 'Bodipo',
-        englishWord: 'Backpack',
-        definition:
-          "A bag with shoulder straps that allow it to be carried on one's back, typically used by students or hikers to carry books or supplies",
-        context: 'He packed his lunch in his backpack',
-        category: 'appearance',
-        difficulty: 'beginner',
-        isFavorite: true,
-        usage: 310,
-        translations: [
-          {
-            id: '3a',
-            communityWord: 'Bodipo',
-            audioUrl: 'https://example.com/audio/bodipo.mp3',
-            votes: 12,
-          },
-          {
-            id: '3b',
-            communityWord: 'Bodipolu',
-            audioUrl: 'https://example.com/audio/bodipolu.mp3',
-            votes: 9,
-          },
-        ],
-      },
-      {
-        id: '4',
-        translation: 'Bodipo lilu',
-        englishWord: 'Briefcase',
-        definition:
-          'A flat, rectangular container with a handle, used for carrying books, papers, or a laptop, typically used by professionals',
-        context: 'The lawyer carried important documents in his briefcase',
-        category: 'abstract',
-        difficulty: 'advanced',
-        isFavorite: false,
-        usage: 95,
-        translations: [
-          {
-            id: '4a',
-            communityWord: 'Bodipo lilu',
-            audioUrl: 'https://example.com/audio/bodipolilu.mp3',
-            votes: 4,
-          },
-        ],
-      },
-      {
-        id: '5',
-        translation: 'Bata',
-        englishWord: 'Boot',
-        definition:
-          'A sturdy item of footwear covering the foot and ankle, and sometimes extending up to the knee or hip, typically made of leather or rubber',
-        context: 'She wore boots to protect her feet from the snow',
-        category: 'appearance',
-        difficulty: 'intermediate',
-        isFavorite: false,
-        usage: 150,
-        translations: [
-          {
-            id: '5a',
-            communityWord: 'Bata',
-            audioUrl: 'https://example.com/audio/bata.mp3',
-            votes: 7,
-          },
-          {
-            id: '5b',
-            communityWord: 'Batalilu',
-            audioUrl: 'https://example.com/audio/batalilu.mp3',
-            votes: 3,
-          },
-          {
-            id: '5c',
-            communityWord: 'Bato',
-            audioUrl: 'https://example.com/audio/bato.mp3',
-            votes: 2,
-          },
-        ],
-      },
-      {
-        id: '6',
-        translation: 'Bata lilu',
-        englishWord: 'Boots',
-        definition:
-          'A pair of sturdy items of footwear covering the foot and ankle, and sometimes extending up to the knee or hip, typically made of leather or rubber',
-        context: 'She wore boots to protect her feet from the snow',
-        category: 'appearance',
-        difficulty: 'intermediate',
-        isFavorite: false,
-        usage: 150,
-        translations: [
-          {
-            id: '6a',
-            communityWord: 'Bata lilu',
-            audioUrl: 'https://example.com/audio/batalilu.mp3',
-            votes: 5,
-          },
-        ],
-      },
-      {
-        id: '7',
-        translation: 'Abokiti',
-        englishWord: 'Aboriginal',
-        definition:
-          'A person, typically a member of a community, who is the original inhabitant of a country or region, especially one who has been displaced or marginalized by colonization or migration.',
-        context: 'The aboriginal people have a rich cultural heritage',
-        category: 'abstract',
-        difficulty: 'advanced',
-        isFavorite: false,
-        usage: 75,
-        translations: [
-          {
-            id: '7a',
-            communityWord: 'Abokiti',
-            audioUrl: 'https://example.com/audio/abokiti.mp3',
-            votes: 6,
-          },
-          {
-            id: '7b',
-            communityWord: 'Abokitulilu',
-            audioUrl: 'https://example.com/audio/abokitulilu.mp3',
-            votes: 4,
-          },
-        ],
-      },
-      {
-        id: '8',
-        translation: 'Aja',
-        englishWord: 'Apple',
-        definition:
-          'A round fruit with red or green skin and a whitish interior, typically sweet and crisp, grown on apple trees.',
-        context: 'She ate an apple as a healthy snack',
-        category: 'abstract',
-        difficulty: 'beginner',
-        isFavorite: true,
-        usage: 400,
-        translations: [
-          {
-            id: '8a',
-            communityWord: 'Aja',
-            audioUrl: 'https://example.com/audio/aja.mp3',
-            votes: 15,
-          },
-          {
-            id: '8b',
-            communityWord: 'Ajalilu',
-            audioUrl: 'https://example.com/audio/ajalilu.mp3',
-            votes: 10,
-          },
-        ],
-      },
-      {
-        id: '9',
-        translation: 'Aso',
-        englishWord: 'Apron',
-        definition:
-          "A protective garment worn over the front of one's clothes and tied at the back, typically used while cooking or cleaning to keep clothes clean.",
-        context: 'She wore an apron while baking cookies',
-        category: 'appearance',
-        difficulty: 'intermediate',
-        isFavorite: false,
-        usage: 120,
-        translations: [
-          {
-            id: '9a',
-            communityWord: 'Aso',
-            audioUrl: 'https://example.com/audio/aso.mp3',
-            votes: 8,
-          },
-        ],
-      },
-      {
-        id: '10',
-        translation: 'Awo',
-        englishWord: 'Arrow',
-        definition:
-          'A thin, pointed missile that is shot from a bow, typically made of wood or carbon fiber with a metal tip and feathers at the back for stability during flight.',
-        context: 'The archer aimed his arrow at the target',
-        category: 'appearance',
-        difficulty: 'advanced',
-        isFavorite: false,
-        usage: 60,
-        translations: [
-          {
-            id: '10a',
-            communityWord: 'Awo',
-            audioUrl: 'https://example.com/audio/awo.mp3',
-            votes: 5,
-          },
-        ],
-      },
-      {
-        id: '11',
-        translation: 'Awo lilu',
-        englishWord: 'Arrows',
-        definition:
-          'Thin, pointed missiles that are shot from a bow, typically made of wood or carbon fiber with a metal tip and feathers at the back for stability during flight.',
-        context: 'The archer aimed his arrows at the target',
-        category: 'appearance',
-        difficulty: 'advanced',
-        isFavorite: false,
-        usage: 60,
-        translations: [
-          {
-            id: '11a',
-            communityWord: 'Awo lilu',
-            audioUrl: 'https://example.com/audio/awolilu.mp3',
-            votes: 3,
-          },
-          {
-            id: '11b',
-            communityWord: 'Awolilu',
-            audioUrl: 'https://example.com/audio/awolilu.mp3',
-            votes: 2,
-          },
-        ],
-      },
-      // New Data for C
-      {
-        id: '12',
-        translation: 'Chemela',
-        englishWord: 'Camera',
-        definition:
-          'A device for recording visual images in the form of photographs, film, or video signals.',
-        context: 'I took diverse pictures with my camera',
-        category: 'technology',
-        difficulty: 'beginner',
-        isFavorite: true,
-        usage: 320,
-        translations: [
-          {
-            id: '12a',
-            communityWord: 'Chemela',
-            audioUrl: 'https://example.com/audio/chemela.mp3',
-            votes: 25,
-          },
-        ],
-      },
-      {
-        id: '13',
-        translation: 'Chokolo',
-        englishWord: 'Chocolate',
-        definition:
-          'A food preparation in the form of a paste or solid block made from roasted and ground cacao seeds, typically sweetened.',
-        context: 'The children love chocolate ice cream',
-        category: 'food',
-        difficulty: 'beginner',
-        isFavorite: true,
-        usage: 500,
-        translations: [],
-      },
-      // New Data for D
-      {
-        id: '14',
-        translation: 'Dogo',
-        englishWord: 'Dog',
-        definition:
-          'A domesticated carnivorous mammal that typically has a long snout, an acute sense of smell, non-retractable claws, and a barking, howling, or whining voice.',
-        context: 'The dog barked at the stranger',
-        category: 'animals',
-        difficulty: 'beginner',
-        isFavorite: true,
-        usage: 600,
-        translations: [],
-      },
-      {
-        id: '15',
-        translation: 'Daramu',
-        englishWord: 'Drum',
-        definition:
-          'A percussion instrument sounded by being struck with sticks or the hands, typically cylindrical, barrel-shaped, or bowl-shaped, with a taut membrane over one or both ends.',
-        context: 'He played the drum in the band',
-        category: 'music',
-        difficulty: 'intermediate',
-        isFavorite: false,
-        usage: 120,
-        translations: [],
-      },
-      // New Data for E
-      {
-        id: '16',
-        translation: 'Elefanti',
-        englishWord: 'Elephant',
-        definition:
-          'A heavy plant-eating mammal with a prehensile trunk, long curved ivory tusks, and large ears, native to Africa and southern Asia.',
-        context: 'The elephant is the largest land animal',
-        category: 'animals',
-        difficulty: 'intermediate',
-        isFavorite: true,
-        usage: 220,
-        translations: [],
-      },
-      {
-        id: '17',
-        translation: 'Egu',
-        englishWord: 'Egg',
-        definition:
-          'An oval or round object laid by a female bird, reptile, fish, or invertebrate, usually containing a developing embryo.',
-        context: 'I had boiled eggs for breakfast',
-        category: 'food',
-        difficulty: 'beginner',
-        isFavorite: false,
-        usage: 450,
-        translations: [],
-      },
-    ];
-    setWords(mockWords);
-  };
+    // Resolve English language ID then load terms
+    fetch('/api/language/english')
+      .then(r => r.json())
+      .then((data: { id: number }) => {
+        setEnglishLanguageId(data.id);
+        // Default: community language as primary view
+        loadTerms(communityId, data.id);
+      })
+      .catch(() => {
+        loadTerms(communityId, communityId);
+      });
+  }, [router, appUser, authLoading, userNeoCommunity, loadTerms]);
 
-  const getActiveWord = (word: DictionaryWord) => {
-    return activeLanguage === 'english' ? word.englishWord : word.translation;
-  };
+  const getActiveWord = (word: DictionaryTerm) => word.text;
 
-  const getSecondaryWord = (word: DictionaryWord) => {
-    return activeLanguage === 'english' ? word.translation : word.englishWord;
-  };
+  const getSecondaryWord = (word: DictionaryTerm) => word.translation ?? '';
 
   const toggleLanguage = () => {
-    setActiveLanguage(prev => (prev === 'english' ? 'community' : 'english'));
-    // Optionally reset alphabet or search when toggling?
-    // Let's keep filters, but maybe reset alphabet to match the new language?
-    // If I'm on 'B' for 'Bookmark', switching to community 'Bookumaaki' (still B) works.
-    // If 'A' for 'Apple', switching to community 'Aja' (still A) works.
-    // But 'Aboriginal' -> 'Abokiti' (A->A).
-    // 'Dog' -> 'Dogo' (D->D).
-    // Most translations often start similarly for cognates, but not always.
-    // Let's reset alphabet if filtered list is empty? Or just let user navigate.
-    // Simpler: Keep current filters. User can adjust.
+    if (!userNeoCommunity || !englishLanguageId) return;
+    const communityId = Number(userNeoCommunity.id);
+    if (activeLanguage === 'community') {
+      setActiveLanguage('english');
+      loadTerms(englishLanguageId, communityId);
+    } else {
+      setActiveLanguage('community');
+      loadTerms(communityId, englishLanguageId);
+    }
   };
 
   if (loading || authLoading) {
@@ -508,7 +146,7 @@ export default function DictionaryPage() {
         searchQuery === '' ||
         displayWord.toLowerCase().includes(searchQuery.toLowerCase()) ||
         secondaryWord.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        word.definition.toLowerCase().includes(searchQuery.toLowerCase());
+        word.meaning.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesAlphabet =
         currentAlphabet === '' ||
@@ -578,15 +216,14 @@ export default function DictionaryPage() {
                       key={word.id}
                       word={getActiveWord(word)}
                       translation={getSecondaryWord(word)}
-                      // definition={`${word.definition}  eg: ${word.context}`}
-                      definition={`${word.definition}`}
+                      definition={word.meaning}
                       languageName={
                         activeLanguage === 'english'
                           ? userNeoCommunity?.name || 'Awalingo'
                           : 'English'
                       }
                       index={index}
-                      translations={word.translations}
+                      translations={word.translation ? [{ id: String(word.id), communityWord: word.translation, votes: 0 }] : []}
                     />
                   ))
                 ) : (

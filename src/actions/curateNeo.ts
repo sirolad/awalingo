@@ -93,12 +93,20 @@ export async function getTerms(
 
     return await prisma.term.findMany({
       where: {
-        targetLanguageId: userCommunityId,
+        languageId: userCommunityId,
         id: { in: termIds.length > 0 ? termIds : undefined },
       },
       select: {
         id: true,
         text: true,
+        meaning: true,
+        phonics: true,
+        languageId: true,
+        partOfSpeechId: true,
+        conceptId: true,
+        voteScore: true,
+        createdAt: true,
+        updatedAt: true,
         concept: {
           select: {
             gloss: true,

@@ -33,10 +33,10 @@ const NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, href: '/admin', active: true },
   { label: 'Users', icon: Users, href: '/admin/users', active: false },
   {
-    label: 'Dictionary',
+    label: 'Dictionary Terms',
     icon: BookOpen,
-    href: '/admin/dictionary',
-    active: false,
+    href: '/admin/dictionary-terms',
+    active: true,
   },
   {
     label: 'Review Requests',
