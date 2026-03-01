@@ -101,6 +101,9 @@ export function AdminRequestList() {
                 <th className="py-3 px-4 font-semibold text-sm">Language</th>
                 <th className="py-3 px-4 font-semibold text-sm">User</th>
                 <th className="py-3 px-4 font-semibold text-sm">Status</th>
+                <th className="py-3 px-4 font-semibold text-sm">
+                  Rejection Reason
+                </th>
                 <th className="py-3 px-4 font-semibold text-sm">Date</th>
               </tr>
             </thead>
@@ -160,6 +163,20 @@ export function AdminRequestList() {
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50">
                         <Clock className="w-3 h-3" /> Pending
                       </span>
+                    )}
+                  </td>
+                  <td
+                    className="py-3 px-4 text-sm text-neutral-600 dark:text-neutral-300 max-w-xs truncate"
+                    title={req.rejectionReason || ''}
+                  >
+                    {req.status === 'REJECTED' ? (
+                      req.rejectionReason || (
+                        <span className="text-neutral-400 italic">
+                          None provided
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-neutral-400 italic">—</span>
                     )}
                   </td>
                   <td className="py-3 px-4 text-sm text-neutral-500 whitespace-nowrap">
