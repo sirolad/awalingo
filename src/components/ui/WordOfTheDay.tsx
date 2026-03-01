@@ -3,6 +3,7 @@ interface WordOfTheDayProps {
   definition: string;
   partOfSpeech?: string;
   innerBgClassName?: string;
+  showWordOfTheDay?: boolean;
 }
 
 export function WordOfTheDay({
@@ -10,12 +11,15 @@ export function WordOfTheDay({
   definition,
   partOfSpeech,
   innerBgClassName,
+  showWordOfTheDay = true,
 }: WordOfTheDayProps) {
   return (
     <div
-      className={`mb-4 p-4 bg-white dark:bg-neutral-900 rounded-3xl md:rounded-[2rem] lg:rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-soft overflow-hidden hover:shadow-lg transition-shadow`}
+      className={`mb-4 p-4 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-100 dark:border-neutral-800 shadow-soft overflow-hidden hover:shadow-lg transition-shadow`}
     >
-      <h2 className="heading-5 mb-2 dark:text-neutral-50">Word of the Day</h2>
+      {showWordOfTheDay && (
+        <h2 className="heading-5 mb-2 dark:text-neutral-50">Word of the Day</h2>
+      )}
       <div
         className={`p-4 w-full border rounded-xl ${innerBgClassName || 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'}`}
       >

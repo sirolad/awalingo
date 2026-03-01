@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState, useEffect, useRef, useState } from 'react';
+import React, { use, useActionState, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
@@ -25,7 +25,7 @@ import { Modal } from '@/components/ui/Modal';
 import SuggestInput from '@/components/ui/SuggestInput';
 import { curateNeo, getTerms } from '@/actions/curateNeo';
 import { toast } from 'sonner';
-import { set } from 'zod';
+import { TermsList } from '@/components/ui/TermsList';
 
 interface Term {
   id: number;
@@ -43,10 +43,12 @@ export default function SuggestPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [term, setTerm] = useState<Term>({} as Term);
+  const [terms, setTerms] = useState<Term[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(<></>);
   const [modalBody, setModalBody] = useState(<></>);
   const [loadSuggestionsTrigger, setLoadSuggestionsTrigger] = useState(true);
+  const { isLoading: authLoading } = useAuth();
   const [suggestions, setSuggestions] = useState<
     {
       type: string;
@@ -61,38 +63,12 @@ export default function SuggestPage() {
     message: '',
   });
   const prevStateRef = useRef(state);
-
-  const dummyTerms = [
-    {
-      id: 1,
-      text: 'Hydrogen',
-      partOfSpeech: { name: 'noun' },
-      concept: {
-        gloss:
-          'A colorless, odorless, highly flammable gas that is the lightest and most abundant element in the universe.',
-      },
-      _count: { neos: 0 },
-    },
-    {
-      id: 2,
-      text: 'Euphoria',
-      partOfSpeech: { name: 'noun' },
-      concept: { gloss: 'A state of intense happiness and well-being.' },
-      _count: { neos: 0 },
-    },
-    {
-      id: 3,
-      text: 'Serendipity',
-      partOfSpeech: { name: 'noun' },
-      concept: {
-        gloss:
-          'The phenomenon of finding valuable or pleasant things that are not looked for.',
-      },
-      _count: { neos: 0 },
-    },
-  ];
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const wordOfTheDay = searchParams.has('wordoftheday');
+    setIsWordOfTheDay(wordOfTheDay);
     const fetchTerms = async () => {
       if (userNeoCommunity != null) {
         let userNeoCommunityId: number;
@@ -106,38 +82,12 @@ export default function SuggestPage() {
           userNeoCommunityId,
           appUser?.id || ''
         );
-        console.log('fetchedTerms _ fetchedTerms ', fetchedTerms);
-        if (fetchedTerms[0]._count.neos >= 5) {
-          toast(
-            'Your can only suggest 5 neos per word, click "Next Words" to explore other terms',
-            {
-              description:
-                'You have made suggestions for all available terms today.',
-              duration: 10000,
-            }
-          );
-          setTerm(fetchedTerms[0]);
-          setSuggestions([]);
-          setAvailableNeoSlots(0);
-          return;
-        } else if (fetchedTerms[0]) {
-          setSuggestions([
-            {
-              type: '',
-              description:
-                'Please select a suggestion type and provide your suggestion for the word of the day.',
-              text: '',
-              audioUrl: null,
-              error: null,
-            },
-          ]);
-          setTerm(fetchedTerms[0]);
-          setAvailableNeoSlots(5 - fetchedTerms[0]._count.neos);
+        if (fetchedTerms.length > 0) {
+          setTerms(fetchedTerms);
+          if (isWordOfTheDay) {
+            setOneTerm(fetchedTerms[0]);
+          }
         }
-      } else {
-        console.warn('User Neo Community is null. Using dummy terms.');
-        setTerm(dummyTerms[0]);
-        setAvailableNeoSlots(5 - dummyTerms[0]._count.neos);
       }
       setLoadSuggestionsTrigger(false);
     };
@@ -228,6 +178,38 @@ export default function SuggestPage() {
     setSubmitted(false);
   };
 
+  const setOneTerm = async (t: Term) => {
+    setSuggestions([]);
+    setIsWordOfTheDay(false);
+    setTerm(t);
+    if (t?._count?.neos >= 5) {
+      toast(
+        'Your can only suggest 5 neos per word, click "Next Words" to explore other terms',
+        {
+          description:
+            'You have made suggestions for all available terms today.',
+          duration: 10000,
+        }
+      );
+      setTerm(t);
+      setSuggestions([]);
+      setAvailableNeoSlots(0);
+      return;
+    } else if (t) {
+      setSuggestions([
+        {
+          type: '',
+          description:
+            'Please select a suggestion type and provide your suggestion for the word of the day.',
+          text: '',
+          audioUrl: null,
+          error: null,
+        },
+      ]);
+      setTerm(t);
+      setAvailableNeoSlots(5 - t?._count?.neos);
+    }
+  };
   if (submitted) {
     return (
       <ProtectedRoute>
@@ -285,7 +267,7 @@ export default function SuggestPage() {
     <ProtectedRoute>
       {showModal && Modal(modalTitle, modalBody, () => setShowModal(false))}
       <Layout variant="home">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="w-full mx-auto px-4 md:px-6 lg:px-8">
           {/* Header */}
           <div className="flex items-center justify-between py-4 md:py-6 lg:py-8">
             <button
@@ -309,156 +291,414 @@ export default function SuggestPage() {
             {/* Spacer for centering */}
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 pb-20 md:pb-8">
-            <WordOfTheDay
-              word={term?.text || 'Loading...'}
-              definition={term?.concept?.gloss || 'No definition available.'}
-              partOfSpeech={term?.partOfSpeech?.name || 'nouns'}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-neutral-900 rounded-3xl md:rounded-[2rem] lg:rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-soft overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              {/* Form */}
-              <form
-                onSubmit={() => setSubmitting(true)}
-                action={formData => {
-                  formData.append('userId', appUser?.id || '');
-                  formData.append('termId', term.id.toString());
-                  formAction(formData);
-                }}
-                className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8 lg:space-y-10"
-              >
-                {/* Two-column layout for larger screens */}
-                <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 md:gap-8">
-                  {suggestions.map((suggestion, index) => (
-                    <React.Fragment key={index}>
-                      <SuggestInput
-                        key={index}
-                        type={suggestion.type}
-                        value={suggestion.text}
-                        label={
-                          suggestion.type.charAt(0).toUpperCase() +
-                          suggestion.type.slice(1)
-                        }
-                        onChange={value => {
-                          suggestions[index].type = value;
-                          suggestions[index].description =
-                            getDescription(value);
-                          setSuggestions([...suggestions]);
-                        }}
-                        onInfoClick={() => {
-                          setModalTitle(
-                            <div className="flex items-center gap-2">
-                              {typeIcon(suggestion.type)}{' '}
-                              {suggestion.type.charAt(0).toUpperCase() +
-                                suggestion.type.slice(1)}
-                            </div>
-                          );
-                          setModalBody(
-                            <p className="">{suggestion.description}</p>
-                          );
-                          setShowModal(true);
-                        }}
-                        onInput={value => {
-                          suggestions[index].text = value;
-                          setSuggestions([...suggestions]);
-                        }}
-                        canDelete={index !== 0} // Prevent deletion of the first suggestion
-                        onDelete={() => {
-                          suggestions.splice(index, 1);
-                          setSuggestions([...suggestions]);
-                        }}
-                        onAudioChange={url => {
-                          suggestions[index].audioUrl = url;
-                          setSuggestions([...suggestions]);
-                        }}
-                      />
-                      <input
-                        type="hidden"
-                        name={`suggestions[${index}]`}
-                        value={JSON.stringify(suggestion)}
-                      />
-                      <input
-                        type="hidden"
-                        name={`suggestions[${index}].type`}
-                        value={suggestion.type}
-                      />
-                      <input
-                        type="hidden"
-                        name={`suggestions[${index}].text`}
-                        value={suggestion.text}
-                      />
-                      <input
-                        type="hidden"
-                        name={`suggestions[${index}].audioUrl`}
-                        value={suggestion.audioUrl || ''}
-                      />
-                      {suggestion.error && (
-                        <span
-                          onClick={() =>
-                            setSuggestions(prev =>
-                              prev.map((s, i) =>
-                                i === index ? { ...s, error: null } : s
-                              )
-                            )
-                          }
-                          className="body-small text-red-600 dark:text-red-400"
-                        >
-                          {suggestion.error} &nbsp;{' '}
-                          <em className="text-[#000000] dark:text-[#FFFFFF] cursor-pointer">
-                            Dismiss
-                          </em>
-                        </span>
-                      )}
-                      <hr />
-                    </React.Fragment>
-                  ))}
-                  <span
-                    onClick={() => {
-                      if (suggestions.length === availableNeoSlots) return;
-                      setSuggestions(prev => [
-                        ...prev,
-                        {
-                          type: '',
-                          description:
-                            'Please select a suggestion type and provide your suggestion for the word of the day.',
-                          text: '',
-                          audioUrl: '',
-                          error: null,
-                        },
-                      ]);
-                    }}
-                    className="justify-self-center text-sm text-neutral-600 dark:text-neutral-400 cursor-pointer flex"
-                  >
-                    {' '}
-                    <Plus className="ml-2 w-5 h-5 md:w-6 md:h-6" />{' '}
-                    <span>Add more Suggestion for this word</span>
-                  </span>
+          <div className="hidden lg:grid grid-cols-[260px_1fr] gap-8 min-h-[70vh]">
+            <div>
+              <aside className="sticky top-32 self-start">
+                <div className="flex flex-col gap-6 bg-white/80 dark:bg-neutral-900/80 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-soft p-6 h-fit mb-5">
+                  <h3 className="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">
+                    Leaderboard
+                  </h3>
+                  <ul className="flex flex-col gap-2">
+                    <li className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-200">
+                      <span className="font-bold">1.</span> Ada Lovelace{' '}
+                      <span className="ml-auto text-primary-600 font-semibold">
+                        42
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-200">
+                      <span className="font-bold">2.</span> Alan Turing{' '}
+                      <span className="ml-auto text-primary-600 font-semibold">
+                        37
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-200">
+                      <span className="font-bold">3.</span> Grace Hopper{' '}
+                      <span className="ml-auto text-primary-600 font-semibold">
+                        29
+                      </span>
+                    </li>
+                  </ul>
                 </div>
 
-                <div className="pt-4 md:pt-6">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    fullWidth
-                    loading={submitting}
-                    disabled={
-                      suggestions.filter(s => !s.text.trim()).length > 0 ||
-                      suggestions.filter(s => !s.type).length > 0 ||
-                      suggestions.length == 0
-                    }
-                    className="h-12 md:h-14 lg:h-16 rounded-full md:rounded-full font-medium text-base md:text-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    Submit
-                  </Button>
+                <div className="flex flex-col gap-6 bg-white/80 dark:bg-neutral-900/80 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-soft p-6 h-fit">
+                  <h3 className="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">
+                    Your Stats
+                  </h3>
+                  <ul className="flex flex-col gap-2">
+                    <li className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-200">
+                      <span className="font-bold">Votes Cast:</span> 12
+                    </li>
+                    <li className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-200">
+                      <span className="font-bold">Words Suggested:</span> 5
+                    </li>
+                    <li className="flex items-center gap-2 text-base text-neutral-700 dark:text-neutral-200">
+                      <span className="font-bold">Communities Joined:</span> 3
+                    </li>
+                  </ul>
                 </div>
-              </form>
-            </motion.div>
+              </aside>
+            </div>
+            <main className="flex flex-col gap-8">
+              <div className="flex-1 pb-20 md:pb-8">
+                {Object.keys(term).length > 0 ? (
+                  <>
+                    <WordOfTheDay
+                      word={term?.text || 'Loading...'}
+                      definition={
+                        term?.concept?.gloss || 'No definition available.'
+                      }
+                      partOfSpeech={term?.partOfSpeech?.name || 'nouns'}
+                      showWordOfTheDay={isWordOfTheDay}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-white dark:bg-neutral-900 rounded-3xl md:rounded-[2rem] lg:rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-soft overflow-hidden hover:shadow-lg transition-shadow"
+                    >
+                      {/* Form */}
+                      <form
+                        onSubmit={() => setSubmitting(true)}
+                        action={formData => {
+                          formData.append('userId', appUser?.id || '');
+                          formData.append('termId', term.id.toString());
+                          formAction(formData);
+                        }}
+                        className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8 lg:space-y-10"
+                      >
+                        {/* Two-column layout for larger screens */}
+                        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 md:gap-8">
+                          {suggestions.map((suggestion, index) => (
+                            <React.Fragment key={index}>
+                              <SuggestInput
+                                key={index}
+                                type={suggestion.type}
+                                value={suggestion.text}
+                                label={
+                                  suggestion.type.charAt(0).toUpperCase() +
+                                  suggestion.type.slice(1)
+                                }
+                                onChange={value => {
+                                  suggestions[index].type = value;
+                                  suggestions[index].description =
+                                    getDescription(value);
+                                  setSuggestions([...suggestions]);
+                                }}
+                                onInfoClick={() => {
+                                  setModalTitle(
+                                    <div className="flex items-center gap-2">
+                                      {typeIcon(suggestion.type)}{' '}
+                                      {suggestion.type.charAt(0).toUpperCase() +
+                                        suggestion.type.slice(1)}
+                                    </div>
+                                  );
+                                  setModalBody(
+                                    <p className="">{suggestion.description}</p>
+                                  );
+                                  setShowModal(true);
+                                }}
+                                onInput={value => {
+                                  suggestions[index].text = value;
+                                  setSuggestions([...suggestions]);
+                                }}
+                                canDelete={index !== 0} // Prevent deletion of the first suggestion
+                                onDelete={() => {
+                                  suggestions.splice(index, 1);
+                                  setSuggestions([...suggestions]);
+                                }}
+                                onAudioChange={url => {
+                                  suggestions[index].audioUrl = url;
+                                  setSuggestions([...suggestions]);
+                                }}
+                              />
+                              <input
+                                type="hidden"
+                                name={`suggestions[${index}]`}
+                                value={JSON.stringify(suggestion)}
+                              />
+                              <input
+                                type="hidden"
+                                name={`suggestions[${index}].type`}
+                                value={suggestion.type}
+                              />
+                              <input
+                                type="hidden"
+                                name={`suggestions[${index}].text`}
+                                value={suggestion.text}
+                              />
+                              <input
+                                type="hidden"
+                                name={`suggestions[${index}].audioUrl`}
+                                value={suggestion.audioUrl || ''}
+                              />
+                              {suggestion.error && (
+                                <span
+                                  onClick={() =>
+                                    setSuggestions(prev =>
+                                      prev.map((s, i) =>
+                                        i === index ? { ...s, error: null } : s
+                                      )
+                                    )
+                                  }
+                                  className="body-small text-red-600 dark:text-red-400"
+                                >
+                                  {suggestion.error} &nbsp;{' '}
+                                  <em className="text-[#000000] dark:text-[#FFFFFF] cursor-pointer">
+                                    Dismiss
+                                  </em>
+                                </span>
+                              )}
+                              <hr />
+                            </React.Fragment>
+                          ))}
+                          <span
+                            onClick={() => {
+                              if (
+                                Object.keys(term).length === 0 ||
+                                suggestions.length === availableNeoSlots
+                              )
+                                return;
+                              setSuggestions(prev => [
+                                ...prev,
+                                {
+                                  type: '',
+                                  description:
+                                    'Please select a suggestion type and provide your suggestion for the word of the day.',
+                                  text: '',
+                                  audioUrl: '',
+                                  error: null,
+                                },
+                              ]);
+                            }}
+                            className="justify-self-center text-sm text-neutral-600 dark:text-neutral-400 cursor-pointer flex"
+                          >
+                            {' '}
+                            <Plus className="ml-2 w-5 h-5 md:w-6 md:h-6" />{' '}
+                            <span>Add more Suggestion for this word</span>
+                          </span>
+                        </div>
+
+                        <div className="pt-4 md:pt-6">
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            size="lg"
+                            fullWidth
+                            loading={submitting}
+                            disabled={
+                              suggestions.filter(s => !s.text.trim()).length >
+                                0 ||
+                              suggestions.filter(s => !s.type).length > 0 ||
+                              suggestions.length == 0
+                            }
+                            className="h-12 md:h-14 lg:h-16 rounded-full md:rounded-full font-medium text-base md:text-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  </>
+                ) : (
+                  <TermsList
+                    title="More words to make suggestions for"
+                    terms={terms}
+                    onSelectTerm={setOneTerm}
+                  />
+                )}
+                <div className="flex flex-row justify-center mt-6 md:mt-8 lg:mt-10">
+                  <div className="flex  gap-1 flex-row justify-center">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="rounded-full"
+                      onClick={() => setLoadSuggestionsTrigger(true)}
+                      disabled={true}
+                    >
+                      Refresh Neos{' '}
+                      <RefreshCcwDot className="ml-2 w-5 h-5 md:w-6 md:h-6" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="md"
+                      onClick={() => {
+                        setSuggestions([]);
+                        setOneTerm({} as Term);
+                      }}
+                      className="ml-4 rounded-full"
+                    >
+                      Curation Lounge{' '}
+                      <ArrowLeft className="rotate-180 ml-2 w-5 h-5 md:w-6 md:h-6" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:hidden  flex-1 pb-20 md:pb-8">
+            {Object.keys(term).length > 0 ? (
+              <>
+                <WordOfTheDay
+                  word={term?.text || 'Loading...'}
+                  definition={
+                    term?.concept?.gloss || 'No definition available.'
+                  }
+                  partOfSpeech={term?.partOfSpeech?.name || 'nouns'}
+                  showWordOfTheDay={isWordOfTheDay}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white dark:bg-neutral-900 rounded-3xl md:rounded-[2rem] lg:rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-soft overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  {/* Form */}
+                  <form
+                    onSubmit={() => setSubmitting(true)}
+                    action={formData => {
+                      formData.append('userId', appUser?.id || '');
+                      formData.append('termId', term.id.toString());
+                      formAction(formData);
+                    }}
+                    className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8 lg:space-y-10"
+                  >
+                    {/* Two-column layout for larger screens */}
+                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 md:gap-8">
+                      {suggestions.map((suggestion, index) => (
+                        <React.Fragment key={index}>
+                          <SuggestInput
+                            key={index}
+                            type={suggestion.type}
+                            value={suggestion.text}
+                            label={
+                              suggestion.type.charAt(0).toUpperCase() +
+                              suggestion.type.slice(1)
+                            }
+                            onChange={value => {
+                              suggestions[index].type = value;
+                              suggestions[index].description =
+                                getDescription(value);
+                              setSuggestions([...suggestions]);
+                            }}
+                            onInfoClick={() => {
+                              setModalTitle(
+                                <div className="flex items-center gap-2">
+                                  {typeIcon(suggestion.type)}{' '}
+                                  {suggestion.type.charAt(0).toUpperCase() +
+                                    suggestion.type.slice(1)}
+                                </div>
+                              );
+                              setModalBody(
+                                <p className="">{suggestion.description}</p>
+                              );
+                              setShowModal(true);
+                            }}
+                            onInput={value => {
+                              suggestions[index].text = value;
+                              setSuggestions([...suggestions]);
+                            }}
+                            canDelete={index !== 0} // Prevent deletion of the first suggestion
+                            onDelete={() => {
+                              suggestions.splice(index, 1);
+                              setSuggestions([...suggestions]);
+                            }}
+                            onAudioChange={url => {
+                              suggestions[index].audioUrl = url;
+                              setSuggestions([...suggestions]);
+                            }}
+                          />
+                          <input
+                            type="hidden"
+                            name={`suggestions[${index}]`}
+                            value={JSON.stringify(suggestion)}
+                          />
+                          <input
+                            type="hidden"
+                            name={`suggestions[${index}].type`}
+                            value={suggestion.type}
+                          />
+                          <input
+                            type="hidden"
+                            name={`suggestions[${index}].text`}
+                            value={suggestion.text}
+                          />
+                          <input
+                            type="hidden"
+                            name={`suggestions[${index}].audioUrl`}
+                            value={suggestion.audioUrl || ''}
+                          />
+                          {suggestion.error && (
+                            <span
+                              onClick={() =>
+                                setSuggestions(prev =>
+                                  prev.map((s, i) =>
+                                    i === index ? { ...s, error: null } : s
+                                  )
+                                )
+                              }
+                              className="body-small text-red-600 dark:text-red-400"
+                            >
+                              {suggestion.error} &nbsp;{' '}
+                              <em className="text-[#000000] dark:text-[#FFFFFF] cursor-pointer">
+                                Dismiss
+                              </em>
+                            </span>
+                          )}
+                          <hr />
+                        </React.Fragment>
+                      ))}
+                      <span
+                        onClick={() => {
+                          if (suggestions.length === availableNeoSlots) return;
+                          setSuggestions(prev => [
+                            ...prev,
+                            {
+                              type: '',
+                              description:
+                                'Please select a suggestion type and provide your suggestion for the word of the day.',
+                              text: '',
+                              audioUrl: '',
+                              error: null,
+                            },
+                          ]);
+                        }}
+                        className="justify-self-center text-sm text-neutral-600 dark:text-neutral-400 cursor-pointer flex"
+                      >
+                        {' '}
+                        <Plus className="ml-2 w-5 h-5 md:w-6 md:h-6" />{' '}
+                        <span>Add more Suggestion for this word</span>
+                      </span>
+                    </div>
+
+                    <div className="pt-4 md:pt-6">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        fullWidth
+                        loading={submitting}
+                        disabled={
+                          suggestions.filter(s => !s.text.trim()).length > 0 ||
+                          suggestions.filter(s => !s.type).length > 0 ||
+                          suggestions.length == 0
+                        }
+                        className="h-12 md:h-14 lg:h-16 rounded-full md:rounded-full font-medium text-base md:text-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      >
+                        Submit
+                      </Button>
+                    </div>
+                  </form>
+                </motion.div>
+              </>
+            ) : (
+              <TermsList
+                title="More words to make suggestions for"
+                terms={terms}
+                onSelectTerm={setOneTerm}
+              />
+            )}
             <div className="flex flex-row justify-center mt-6 md:mt-8 lg:mt-10">
               <div className="flex  gap-1 flex-row justify-center">
                 <Button
@@ -466,6 +706,7 @@ export default function SuggestPage() {
                   size="md"
                   className="rounded-full"
                   onClick={() => setLoadSuggestionsTrigger(true)}
+                  disabled={true}
                 >
                   Refresh Neos{' '}
                   <RefreshCcwDot className="ml-2 w-5 h-5 md:w-6 md:h-6" />
@@ -473,10 +714,13 @@ export default function SuggestPage() {
                 <Button
                   variant="outline"
                   size="md"
-                  // onClick={handleSubmitAnother}
+                  onClick={() => {
+                    setSuggestions([]);
+                    setOneTerm({} as Term);
+                  }}
                   className="ml-4 rounded-full"
                 >
-                  Next Words{' '}
+                  Curation Lounge{' '}
                   <ArrowLeft className="rotate-180 ml-2 w-5 h-5 md:w-6 md:h-6" />
                 </Button>
               </div>

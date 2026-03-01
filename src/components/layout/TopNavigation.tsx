@@ -61,8 +61,8 @@ export function TopNavigation() {
     },
     {
       icon: <Vote className="w-5 h-5" />,
-      label: 'Vote',
-      href: '/vote',
+      label: can('rate:neos') ? 'Jury' : 'Vote',
+      href: can('rate:neos') ? '/jury' : '/vote',
     },
     {
       icon: <Book className="w-5 h-5" />,
