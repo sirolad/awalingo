@@ -8,8 +8,15 @@ import {
   Clock,
   Pencil,
   Trash2,
+  Wand2,
+  Check,
+  X,
+  ShieldAlert,
+  BadgeCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { SearchBar } from '@/components/ui/SearchBar';
 import {
   Tooltip,
@@ -17,8 +24,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { getAllRequests, deleteRequest } from '@/actions/review';
+import { getAllRequests, deleteRequest, reviewRequest } from '@/actions/review';
 import { getPartsOfSpeech } from '@/actions/catalog';
+import { analyzeRequest, ReviewResult } from '@/actions/ai-review';
 import { RequestEditForm } from '@/components/review/RequestEditForm';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -60,6 +68,15 @@ export function AdminRequestList() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [partsOfSpeech, setPartsOfSpeech] = useState<PartOfSpeech[]>([]);
   const [search, setSearch] = useState('');
+
+  // Review & AI State
+  const [analyzingId, setAnalyzingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [aiResults, setAiResults] = useState<
+    Record<number, ReviewResult | null>
+  >({});
+
   const LIMIT = 20;
 
   useEffect(() => {
@@ -147,6 +164,41 @@ export function AdminRequestList() {
     setDeletingId(null);
   };
 
+  const handleReview = async (
+    id: number,
+    status: 'APPROVED' | 'REJECTED',
+    reason?: string
+  ) => {
+    // Optimistic update
+    setRequests(prev =>
+      prev.map(req =>
+        req.id === id
+          ? { ...req, status, rejectionReason: reason || null }
+          : req
+      )
+    );
+
+    const res = await reviewRequest(id, status, reason);
+
+    if (res.success) {
+      toast.success(`Request ${status.toLowerCase()}`);
+    } else {
+      toast.error(res.error || 'Failed to update status');
+      loadRequests(0); // Revert on failure
+    }
+  };
+
+  const handleAiAnalysis = async (req: Request) => {
+    setAnalyzingId(req.id);
+    const res = await analyzeRequest({ word: req.word, meaning: req.meaning });
+    if (res.success && res.data) {
+      setAiResults(prev => ({ ...prev, [req.id]: res.data }));
+    } else {
+      toast.error('AI Analysis failed');
+    }
+    setAnalyzingId(null);
+  };
+
   if (loading && requests.length === 0) {
     return (
       <div className="space-y-4">
@@ -231,7 +283,7 @@ export function AdminRequestList() {
                 </th>
                 <th className="py-3 px-4 font-semibold text-sm">Reviewer</th>
                 <th className="py-3 px-4 font-semibold text-sm">Date</th>
-                <th className="py-3 px-4 font-semibold text-sm text-center">
+                <th className="py-3 px-4 font-semibold text-sm text-center min-w-[200px]">
                   Actions
                 </th>
               </tr>
@@ -241,14 +293,46 @@ export function AdminRequestList() {
                 <Fragment key={req.id}>
                   <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-neutral-900 dark:text-neutral-100">
-                          {req.word}
-                        </span>
-                        {req.partOfSpeech && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
-                            {req.partOfSpeech.name}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                            {req.word}
                           </span>
+                          {req.partOfSpeech && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                              {req.partOfSpeech.name}
+                            </span>
+                          )}
+                        </div>
+                        {aiResults[req.id] && (
+                          <div
+                            className={`px-2 py-1 rounded w-fit text-xs font-medium border flex items-center gap-1 ${
+                              aiResults[req.id]?.strictDict === 'Approved'
+                                ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:border-green-800'
+                                : aiResults[req.id]?.strictDict === 'Rejected'
+                                  ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:border-red-800'
+                                  : 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800'
+                            }`}
+                          >
+                            {aiResults[req.id]?.strictDict === 'Approved' && (
+                              <BadgeCheck className="w-3 h-3" />
+                            )}
+                            {aiResults[req.id]?.strictDict === 'Rejected' && (
+                              <ShieldAlert className="w-3 h-3" />
+                            )}
+                            {aiResults[req.id]?.strictDict ===
+                              'Needs Review' && (
+                              <AlertTriangle className="w-3 h-3" />
+                            )}
+                            <span
+                              className="max-w-[150px] truncate"
+                              title={aiResults[req.id]?.reason}
+                            >
+                              {aiResults[req.id]?.reason} (
+                              {aiResults[req.id]?.score}
+                              %)
+                            </span>
+                          </div>
                         )}
                       </div>
                     </td>
@@ -321,30 +405,110 @@ export function AdminRequestList() {
                         addSuffix: true,
                       })}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() =>
-                            setEditingId(editingId === req.id ? null : req.id)
-                          }
-                          title="Edit request"
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(req.id)}
-                          disabled={deletingId === req.id}
-                          title="Delete request"
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
-                        >
-                          {deletingId === req.id ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
+                    <td className="py-3 px-4">
+                      {rejectingId === req.id ? (
+                        <div className="flex flex-col gap-2 min-w-[200px]">
+                          <Input
+                            placeholder="Reason for rejection..."
+                            value={rejectionReason}
+                            onChange={e => setRejectionReason(e.target.value)}
+                            className="text-xs h-8 bg-white dark:bg-neutral-900 border-red-200 dark:border-red-900/50"
+                            autoFocus
+                          />
+                          <div className="flex gap-1 w-full">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex-1 rounded text-neutral-600 h-8 text-xs"
+                              onClick={() => {
+                                setRejectingId(null);
+                                setRejectionReason('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded h-8 text-xs"
+                              disabled={!rejectionReason.trim()}
+                              onClick={() => {
+                                handleReview(
+                                  req.id,
+                                  'REJECTED',
+                                  rejectionReason
+                                );
+                                setRejectingId(null);
+                                setRejectionReason('');
+                              }}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 justify-center flex-wrap xl:flex-nowrap w-full">
+                          {req.status === 'PENDING' && !aiResults[req.id] && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 p-1.5 h-8 w-8"
+                              onClick={() => handleAiAnalysis(req)}
+                              disabled={analyzingId === req.id}
+                              title="Ask AI"
+                            >
+                              <Wand2
+                                className={`w-4 h-4 ${analyzingId === req.id ? 'animate-spin' : ''}`}
+                              />
+                            </Button>
                           )}
-                        </button>
-                      </div>
+
+                          {req.status === 'PENDING' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 p-1.5 h-8 w-8"
+                                onClick={() => handleReview(req.id, 'APPROVED')}
+                                title="Approve"
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 h-8 w-8"
+                                onClick={() => setRejectingId(req.id)}
+                                title="Reject"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+
+                          <button
+                            onClick={() =>
+                              setEditingId(editingId === req.id ? null : req.id)
+                            }
+                            title="Edit request"
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(req.id)}
+                            disabled={deletingId === req.id}
+                            title="Delete request"
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                          >
+                            {deletingId === req.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                   {editingId === req.id && (
