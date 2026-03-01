@@ -6,35 +6,39 @@ import {
   canUserTakeQuiz,
   submitQuizAttempt,
 } from '../quiz';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
 // Mock Prisma
 vi.mock('@/lib/prisma', () => {
-  return {
-    default: {
-      quizQuestion: {
-        create: vi.fn(),
-        createMany: vi.fn(),
-      },
-      quizAttempt: {
-        findFirst: vi.fn(),
-        create: vi.fn(),
-      },
-      userTargetLanguage: {
-        findFirst: vi.fn(),
-      },
-      userRole: {
-        findFirst: vi.fn(),
-        deleteMany: vi.fn(),
-        create: vi.fn(),
-      },
-      role: {
-        findUnique: vi.fn(),
-      },
-      $queryRaw: vi.fn(),
-      $transaction: vi.fn(),
+  const mockPrisma = {
+    quizQuestion: {
+      create: vi.fn(),
+      createMany: vi.fn(),
     },
+    quizAttempt: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
+    userTargetLanguage: {
+      findFirst: vi.fn(),
+    },
+    userRole: {
+      findFirst: vi.fn(),
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+    },
+    role: {
+      findUnique: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
+    $transaction: vi.fn(),
+  };
+
+  return {
+    __esModule: true,
+    prisma: mockPrisma,
+    default: mockPrisma,
   };
 });
 
@@ -42,6 +46,13 @@ vi.mock('@/lib/prisma', () => {
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
+
+// Mock Server Auth
+vi.mock('@/lib/auth/server-auth', () => ({
+  requirePermission: vi.fn(),
+}));
+
+import { requirePermission } from '@/lib/auth/server-auth';
 
 describe('Quiz Server Actions', () => {
   beforeEach(() => {
@@ -137,9 +148,7 @@ describe('Quiz Server Actions', () => {
 
   describe('canUserTakeQuiz', () => {
     it('should return false if user is not EXPLORER', async () => {
-      (prisma.userRole.findFirst as any).mockResolvedValue({
-        role: { name: 'CONTRIBUTOR' },
-      });
+      (requirePermission as any).mockRejectedValue(new Error('Unauthorized'));
 
       const result = await canUserTakeQuiz('user1');
 
@@ -149,9 +158,7 @@ describe('Quiz Server Actions', () => {
     });
 
     it('should return false if cooldown is active', async () => {
-      (prisma.userRole.findFirst as any).mockResolvedValue({
-        role: { name: 'EXPLORER' },
-      });
+      (requirePermission as any).mockResolvedValue(undefined);
       const recentDate = new Date();
       (prisma.quizAttempt.findFirst as any).mockResolvedValue({
         id: 1,
@@ -167,9 +174,7 @@ describe('Quiz Server Actions', () => {
     });
 
     it('should return true if EXPLORER and no recent failures', async () => {
-      (prisma.userRole.findFirst as any).mockResolvedValue({
-        role: { name: 'EXPLORER' },
-      });
+      (requirePermission as any).mockResolvedValue(undefined);
       (prisma.quizAttempt.findFirst as any).mockResolvedValue(null);
 
       const result = await canUserTakeQuiz('user1');
