@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, href: '/admin', active: true },
@@ -224,6 +225,8 @@ export function AdminLayout({
                 {headerActions}
               </div>
             )}
+
+            <ThemeToggle />
 
             <button
               onClick={() => router.push('/home')}
