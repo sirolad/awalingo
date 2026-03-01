@@ -94,11 +94,12 @@ export default function JuryPage() {
     { neoId: number; value: number }[]
   >([]);
 
-  const searchParams = new URLSearchParams(window.location.search);
-  const wordOfTheDay = searchParams.has('wordoftheday');
-  const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const wordOfTheDay = searchParams.has('wordoftheday');
+    setIsWordOfTheDay(wordOfTheDay);
     if (authLoading) return;
 
     if (!appUser) {
@@ -119,6 +120,7 @@ export default function JuryPage() {
           userNeoCommunityId = parseInt(userNeoCommunity.id);
         }
         const fetchedTerms = await getTerms(userNeoCommunityId);
+        console.log('Fetched terms:', fetchedTerms);
 
         if (fetchedTerms && fetchedTerms.length > 0) {
           setTerms(fetchedTerms);

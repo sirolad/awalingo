@@ -49,11 +49,12 @@ export default function VotePage() {
   const [term, setTerm] = useState<Term>({} as Term);
   const [terms, setTerms] = useState<Term[]>([]);
   const [loadSuggestionsTrigger, setLoadSuggestionsTrigger] = useState(true);
-  const searchParams = new URLSearchParams(window.location.search);
-  const wordOfTheDay = searchParams.has('wordoftheday');
-  const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const wordOfTheDay = searchParams.has('wordoftheday');
+    setIsWordOfTheDay(wordOfTheDay);
     if (authLoading) return;
 
     if (!appUser) {

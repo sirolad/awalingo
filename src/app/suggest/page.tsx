@@ -63,11 +63,12 @@ export default function SuggestPage() {
     message: '',
   });
   const prevStateRef = useRef(state);
-  const searchParams = new URLSearchParams(window.location.search);
-  const wordOfTheDay = searchParams.has('wordoftheday');
-  const [isWordOfTheDay, setIsWordOfTheDay] = useState(wordOfTheDay);
+  const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const wordOfTheDay = searchParams.has('wordoftheday');
+    setIsWordOfTheDay(wordOfTheDay);
     const fetchTerms = async () => {
       if (userNeoCommunity != null) {
         let userNeoCommunityId: number;
