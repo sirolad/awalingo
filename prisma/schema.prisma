@@ -35,7 +35,7 @@ model UserProfile {
   targetLanguages     UserTargetLanguage[]
   votes               Vote[]
   requests            TranslationRequest[] @relation("RequestedBy")
-  approvals           TranslationRequest[] @relation("ApprovedBy")
+  reviews             TranslationRequest[] @relation("ReviewedBy")
   ratings             NeoRating[]          @relation("RatedBy")
   neos                Neo[]
   quizAttempts    QuizAttempt[]
@@ -219,8 +219,8 @@ model TranslationRequest {
 
   // Approval System
   status          RequestStatus @default(PENDING)
-  approvedById    String?       @db.Uuid
-  approvedBy      UserProfile?  @relation("ApprovedBy", fields: [approvedById], references: [userId])
+  reviewedById    String?       @db.Uuid
+  reviewedBy      UserProfile?  @relation("ReviewedBy", fields: [reviewedById], references: [userId])
   rejectionReason String?
 
   createdAt DateTime @default(now())
@@ -231,7 +231,7 @@ model TranslationRequest {
 
 model DomainsOnRequests {
   requestId Int
-  request   TranslationRequest @relation(fields: [requestId], references: [id])
+  request   TranslationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   domainId Int
   domain   Domain @relation(fields: [domainId], references: [id])

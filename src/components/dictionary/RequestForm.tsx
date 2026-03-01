@@ -295,6 +295,11 @@ export function RequestForm({
                 placeholder="Enter the meaning or context"
                 error={!!state.errors?.meaning}
               />
+              {state.errors?.meaning && (
+                <p className="body-small text-red-500 mt-1">
+                  {state.errors.meaning[0]}
+                </p>
+              )}
             </div>
 
             {/* Related Domains (Tags) */}

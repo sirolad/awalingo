@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -41,6 +41,7 @@ export default function CuratorTestPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(10 * 60); // 10 minutes
 
   useEffect(() => {
     async function initTest() {
@@ -90,6 +91,41 @@ export default function CuratorTestPage() {
 
     initTest();
   }, [appUser, authLoading, router]);
+
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (
+      isLoadingQuestions ||
+      isChecking ||
+      fetchError ||
+      questions.length === 0 ||
+      !eligibilityData?.canTake ||
+      isSubmitting ||
+      timeLeft === 0
+    ) {
+      return;
+    }
+
+    const timerObj = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerObj);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerObj);
+  }, [
+    isLoadingQuestions,
+    isChecking,
+    fetchError,
+    questions.length,
+    eligibilityData,
+    isSubmitting,
+    timeLeft,
+  ]);
 
   if (authLoading || isChecking) {
     return (
@@ -196,6 +232,48 @@ export default function CuratorTestPage() {
     setSelectedAnswer(value);
   };
 
+  const submitTest = async (finalAnswers: string[]) => {
+    if (!appUser) return;
+    setIsSubmitting(true);
+
+    const correctCount = finalAnswers.filter(
+      (answer, index) => answer === questions[index].correctAnswer
+    ).length;
+
+    const submitResult = await submitQuizAttempt(
+      appUser.id,
+      correctCount,
+      totalQuestions
+    );
+
+    if (submitResult.success) {
+      router.push(
+        `/curator-test/result?passed=${submitResult.passed}&score=${correctCount}`
+      );
+    } else {
+      setIsSubmitting(false);
+      alert('Failed to submit results. Please try again.');
+    }
+  };
+
+  // Auto-submit effect when timer reaches 0
+  useEffect(() => {
+    if (timeLeft === 0 && !isSubmitting && questions.length > 0) {
+      const finalAnswers = [...answers];
+      if (selectedAnswer && currentQuestionIndex === finalAnswers.length) {
+        finalAnswers[currentQuestionIndex] = selectedAnswer;
+      }
+      submitTest(finalAnswers);
+    }
+  }, [
+    timeLeft,
+    isSubmitting,
+    questions.length,
+    answers,
+    selectedAnswer,
+    currentQuestionIndex,
+  ]);
+
   const handleNext = async () => {
     if (!selectedAnswer || !appUser) return;
 
@@ -204,37 +282,17 @@ export default function CuratorTestPage() {
     setAnswers(newAnswers);
 
     if (isLastQuestion) {
-      setIsSubmitting(true);
-      // Calculate score
-      const correctCount = newAnswers.filter(
-        (answer, index) => answer === questions[index].correctAnswer
-      ).length;
-
-      const submitResult = await submitQuizAttempt(
-        appUser.id,
-        correctCount,
-        totalQuestions
-      );
-
-      if (submitResult.success) {
-        router.push(
-          `/curator-test/result?passed=${submitResult.passed}&score=${correctCount}`
-        );
-      } else {
-        // Handle edge case where db submission fails, but UI still needs to advance ideally
-        setIsSubmitting(false);
-        alert('Failed to submit results. Please try again.');
-      }
+      await submitTest(newAnswers);
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedAnswer(answers[currentQuestionIndex + 1] || null);
+      setSelectedAnswer(newAnswers[currentQuestionIndex + 1] || null);
     }
   };
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-neutral-950 flex flex-col">
       {/* Header */}
-      <header className="px-4 py-4 lg:px-8 lg:py-6">
+      <header className="px-4 py-4 lg:px-8 lg:py-6 flex justify-between items-center">
         <button
           onClick={handleBack}
           disabled={isSubmitting}
@@ -243,6 +301,14 @@ export default function CuratorTestPage() {
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
+
+        <div
+          className={`flex items-center gap-2 font-mono text-lg font-semibold px-3 py-1.5 rounded-full border ${timeLeft < 60 ? 'text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-800' : 'text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900'}`}
+        >
+          <Clock className="w-5 h-5" />
+          {Math.floor(timeLeft / 60)}:
+          {(timeLeft % 60).toString().padStart(2, '0')}
+        </div>
       </header>
 
       {/* Main Content */}

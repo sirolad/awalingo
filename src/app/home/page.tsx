@@ -146,7 +146,7 @@ export default function HomePage() {
                           word="Curate the dictionary"
                           ctaText="Pending Reviews"
                           variant="review"
-                          onHandleClick={() => handleCta('/admin/requests')}
+                          onHandleClick={() => handleCta('/curator/requests')}
                         />
                       )}
 
