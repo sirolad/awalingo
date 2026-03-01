@@ -38,6 +38,12 @@ const NAV_ITEMS = [
     active: true,
   },
   {
+    label: 'Dictionary Domains',
+    icon: BookOpen,
+    href: '/admin/dictionary-domains',
+    active: true,
+  },
+  {
     label: 'Review Requests',
     icon: ClipboardList,
     href: '/admin/requests',
