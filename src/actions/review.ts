@@ -33,6 +33,28 @@ export async function getPendingRequests(limit = 10, offset = 0) {
   }
 }
 
+export async function getAllRequests(limit = 10, offset = 0) {
+  try {
+    const requests = await prisma.translationRequest.findMany({
+      include: {
+        user: true,
+        sourceLanguage: true,
+        targetLanguage: true,
+        partOfSpeech: true,
+      },
+      take: limit,
+      skip: offset,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return { success: true, data: requests };
+  } catch (error) {
+    console.error('Failed to fetch all requests:', error);
+    return { success: false, error: 'Failed to fetch requests' };
+  }
+}
+
 export async function getPendingReviewsCount() {
   try {
     const count = await prisma.translationRequest.count({
@@ -87,7 +109,8 @@ class ReviewActions {
             },
           });
 
-          // 3. Delete the request — superseded by the Term
+          // 3. Delete the request — superseded by the Term.
+          // `domains_on_requests` rows are cleaned up via ON DELETE CASCADE.
           await tx.translationRequest.delete({ where: { id: requestId } });
         });
 
@@ -116,6 +139,7 @@ class ReviewActions {
       }
 
       revalidatePath('/admin/requests');
+      revalidatePath('/curator/requests');
       revalidatePath('/home');
       revalidatePath('/dictionary');
       return { success: true };
@@ -152,6 +176,7 @@ class EditActions {
       });
 
       revalidatePath('/admin/requests');
+      revalidatePath('/curator/requests');
       return { success: true };
     } catch (error) {
       console.error('Failed to update request:', error);

@@ -231,7 +231,7 @@ model TranslationRequest {
 
 model DomainsOnRequests {
   requestId Int
-  request   TranslationRequest @relation(fields: [requestId], references: [id])
+  request   TranslationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   domainId Int
   domain   Domain @relation(fields: [domainId], references: [id])
