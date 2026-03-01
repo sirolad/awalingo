@@ -13,6 +13,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +56,8 @@ export function RequestReviewList() {
   const [hasMore, setHasMore] = useState(true);
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   const [partsOfSpeech, setPartsOfSpeech] = useState<PartOfSpeech[]>([]);
   const [aiResults, setAiResults] = useState<
     Record<number, ReviewResult | null>
@@ -295,23 +298,58 @@ export function RequestReviewList() {
                     </Button>
                   )}
 
-                  <div className="flex gap-2 w-full">
-                    <Button
-                      variant="outline"
-                      className="flex-1 text-red-600 border-red-100 hover:bg-red-50 hover:border-red-200 rounded-full"
-                      onClick={() => handleReview(req.id, 'REJECTED')}
-                      leftIcon={<X className="w-4 h-4" />}
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-full"
-                      onClick={() => handleReview(req.id, 'APPROVED')}
-                      leftIcon={<Check className="w-4 h-4" />}
-                    >
-                      Approve
-                    </Button>
-                  </div>
+                  {rejectingId === req.id ? (
+                    <div className="flex flex-col gap-2 w-full mt-2 lg:mt-0">
+                      <Input
+                        placeholder="Reason for rejection..."
+                        value={rejectionReason}
+                        onChange={e => setRejectionReason(e.target.value)}
+                        className="text-sm h-10 bg-white dark:bg-neutral-900 border-red-200 dark:border-red-900/50 focus:border-red-500 focus:ring-red-500/20"
+                        autoFocus
+                      />
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          variant="ghost"
+                          className="flex-1 rounded-full text-neutral-600 dark:text-neutral-400 h-10"
+                          onClick={() => {
+                            setRejectingId(null);
+                            setRejectionReason('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-full h-10"
+                          disabled={!rejectionReason.trim()}
+                          onClick={() => {
+                            handleReview(req.id, 'REJECTED', rejectionReason);
+                            setRejectingId(null);
+                            setRejectionReason('');
+                          }}
+                        >
+                          Confirm Reject
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 w-full">
+                      <Button
+                        variant="outline"
+                        className="flex-1 text-red-600 border-red-100 hover:bg-red-50 hover:border-red-200 rounded-full"
+                        onClick={() => setRejectingId(req.id)}
+                        leftIcon={<X className="w-4 h-4" />}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-full"
+                        onClick={() => handleReview(req.id, 'APPROVED')}
+                        leftIcon={<Check className="w-4 h-4" />}
+                      >
+                        Approve
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
