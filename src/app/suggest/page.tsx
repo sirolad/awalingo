@@ -1,6 +1,6 @@
 'use client';
 
-import React, { use, useActionState, useEffect, useRef, useState } from 'react';
+import React, { useActionState, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
@@ -48,7 +48,7 @@ export default function SuggestPage() {
   const [modalTitle, setModalTitle] = useState(<></>);
   const [modalBody, setModalBody] = useState(<></>);
   const [loadSuggestionsTrigger, setLoadSuggestionsTrigger] = useState(true);
-  const { isLoading: authLoading } = useAuth();
+  useAuth();
   const [suggestions, setSuggestions] = useState<
     {
       type: string;

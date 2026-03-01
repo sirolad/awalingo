@@ -2,7 +2,7 @@ import createClient from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { assignRole } from '@/lib/roles';
-import z, { ZodError } from 'zod';
+import z from 'zod';
 
 export const dynamic = 'force-dynamic';
 

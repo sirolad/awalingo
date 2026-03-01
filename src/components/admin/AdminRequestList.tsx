@@ -3,7 +3,6 @@
 import { useState, useEffect, Fragment } from 'react';
 import {
   RefreshCw,
-  Search,
   CheckCircle2,
   XCircle,
   Clock,
@@ -11,7 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { SearchBar } from '@/components/ui/SearchBar';
 import {
   Tooltip,
   TooltipContent,
@@ -19,9 +18,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { getAllRequests, deleteRequest } from '@/actions/review';
-import { toast } from 'sonner';
 import { getPartsOfSpeech } from '@/actions/catalog';
 import { RequestEditForm } from '@/components/review/RequestEditForm';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface PartOfSpeech {
   id: number;
@@ -58,20 +59,24 @@ export function AdminRequestList() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [partsOfSpeech, setPartsOfSpeech] = useState<PartOfSpeech[]>([]);
+  const [search, setSearch] = useState('');
   const LIMIT = 20;
 
   useEffect(() => {
-    loadRequests(0);
+    loadRequests(0, search);
     getPartsOfSpeech().then(parts => {
       setPartsOfSpeech(parts as PartOfSpeech[]);
     });
-  }, []);
+  }, [search]);
 
-  const loadRequests = async (currentOffset: number) => {
+  const loadRequests = async (
+    currentOffset: number,
+    searchQuery: string = search
+  ) => {
     if (currentOffset === 0) setLoading(true);
     else setLoadingMore(true);
 
-    const res = await getAllRequests(LIMIT, currentOffset);
+    const res = await getAllRequests(LIMIT, currentOffset, searchQuery);
 
     if (res.success && res.data) {
       if (currentOffset === 0) {
@@ -144,8 +149,39 @@ export function AdminRequestList() {
 
   if (loading && requests.length === 0) {
     return (
-      <div className="flex justify-center p-12">
-        <RefreshCw className="w-8 h-8 animate-spin text-neutral-400" />
+      <div className="space-y-4">
+        {/* Search Bar Skeleton */}
+        <div className="flex justify-between items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
+          <Skeleton className="w-full md:w-96 h-11 rounded-full" />
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <th key={i} className="py-3 px-4">
+                      <Skeleton className="h-4 w-20" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {Array.from({ length: 5 }).map((_, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {Array.from({ length: 9 }).map((_, colIndex) => (
+                      <td key={colIndex} className="py-4 px-4">
+                        <Skeleton className="h-4 w-full max-w-[120px]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }
@@ -160,6 +196,26 @@ export function AdminRequestList() {
 
   return (
     <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="flex justify-between items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
+        <div className="w-full md:w-96">
+          <SearchBar
+            value={search}
+            onChange={val => {
+              setSearch(val);
+              setOffset(0);
+            }}
+            onClear={() => {
+              setSearch('');
+              setOffset(0);
+            }}
+            placeholder="Search words, meanings, or users..."
+            iconPosition="left"
+            rounded={true}
+          />
+        </div>
+      </div>
+
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -261,7 +317,9 @@ export function AdminRequestList() {
                         ))}
                     </td>
                     <td className="py-3 px-4 text-sm text-neutral-500 whitespace-nowrap">
-                      {new Date(req.createdAt).toLocaleDateString()}
+                      {formatDistanceToNow(new Date(req.createdAt), {
+                        addSuffix: true,
+                      })}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-1">

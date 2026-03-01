@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -11,7 +10,6 @@ import { MyCommunityTag } from '@/components/ui/MyCommunityTag';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import {
-  ArrowLeft,
   Upload,
   Plus,
   AlertCircle,
@@ -47,6 +45,13 @@ import {
 } from '@/actions/quiz';
 import { getTargetLanguages } from '@/actions/language';
 import { LanguageColumns } from '@/types';
+interface EditableQuestion {
+  id: number;
+  text: string;
+  options: QuizOption[];
+  correctAnswer: string;
+  isActive: boolean;
+}
 
 export default function AdminQuizPage() {
   const router = useRouter();
@@ -80,12 +85,20 @@ export default function AdminQuizPage() {
   const [csvError, setCsvError] = useState<string | null>(null);
 
   // Manage Tab State
-  const [existingQuestions, setExistingQuestions] = useState<any[]>([]);
+  const [existingQuestions, setExistingQuestions] = useState<
+    EditableQuestion[]
+  >([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(
     null
   );
-  const [editContent, setEditContent] = useState<any>(null);
+  const [editContent, setEditContent] = useState<EditableQuestion>({
+    id: 0,
+    text: '',
+    options: [],
+    correctAnswer: '',
+    isActive: true,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,7 +134,7 @@ export default function AdminQuizPage() {
     }
   }, [activeTab, selectedLanguageId, currentPage, debouncedSearch]);
 
-  const handleEditClick = (q: any) => {
+  const handleEditClick = (q: EditableQuestion) => {
     setEditingQuestionId(q.id);
     setEditContent({ ...q });
   };
@@ -233,7 +246,7 @@ export default function AdminQuizPage() {
       } else {
         setManualError(result.error || 'Failed to add question');
       }
-    } catch (err) {
+    } catch {
       setManualError('An unexpected error occurred.');
     } finally {
       setIsSubmittingManual(false);
@@ -261,7 +274,7 @@ export default function AdminQuizPage() {
       complete: async results => {
         try {
           const formattedQuestions = [];
-          for (const row of results.data as any[]) {
+          for (const row of results.data as Record<string, string>[]) {
             // Expected headers conceptually: Question, Option A, Option B, Option C, Option D, Answer
             // We use keys derived from user input or just index mapping if standardizing
 
@@ -321,7 +334,7 @@ export default function AdminQuizPage() {
           } else {
             setCsvError(result.error || 'Failed to upload questions');
           }
-        } catch (err) {
+        } catch {
           setCsvError('Error parsing or submitting CSV file.');
         } finally {
           setIsUploadingCsv(false);
@@ -455,7 +468,7 @@ export default function AdminQuizPage() {
                             />
                             <div className="grid grid-cols-2 gap-2">
                               {editContent.options.map(
-                                (opt: any, idx: number) => (
+                                (opt: QuizOption, idx: number) => (
                                   <Input
                                     key={idx}
                                     value={opt.value}
@@ -486,14 +499,16 @@ export default function AdminQuizPage() {
                                   <SelectValue placeholder="Select correct answer" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {editContent.options.map((opt: any) => (
-                                    <SelectItem
-                                      key={opt.label}
-                                      value={opt.value}
-                                    >
-                                      {opt.label} ({opt.value})
-                                    </SelectItem>
-                                  ))}
+                                  {editContent.options.map(
+                                    (opt: QuizOption) => (
+                                      <SelectItem
+                                        key={opt.label}
+                                        value={opt.value}
+                                      >
+                                        {opt.label} ({opt.value})
+                                      </SelectItem>
+                                    )
+                                  )}
                                 </SelectContent>
                               </Select>
                               <label className="flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-100">
@@ -565,7 +580,7 @@ export default function AdminQuizPage() {
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-sm mt-3">
-                              {q.options.map((opt: any) => (
+                              {q.options.map((opt: QuizOption) => (
                                 <div
                                   key={opt.label}
                                   className={`p-2 rounded ${q.correctAnswer === opt.value ? 'bg-green-50 dark:bg-green-900/20 text-green-700 border border-green-200 dark:border-green-800' : 'bg-neutral-50 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400'}`}

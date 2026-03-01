@@ -53,9 +53,9 @@ function getPrismaClient(): PrismaClient {
 
 // Use a Proxy to defer initialization until first use
 export const prisma = new Proxy({} as PrismaClient, {
-  get(target, prop) {
+  get(_target, prop, receiver) {
     const client = getPrismaClient();
-    return (client as any)[prop];
+    return Reflect.get(client as object, prop, receiver);
   },
 });
 

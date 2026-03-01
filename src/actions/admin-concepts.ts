@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth/server-auth';
 import { revalidatePath } from 'next/cache';
+import { Prisma } from '@/generated/prisma';
 import { z } from 'zod';
 
 export interface AdminConceptData {
@@ -27,7 +28,7 @@ export async function getAdminConcepts({
     const { user } = await requireAuth();
     if (!user) throw new Error('Unauthorized');
 
-    const whereClause: any = {};
+    const whereClause: Prisma.ConceptWhereInput = {};
 
     if (search) {
       whereClause.gloss = { contains: search, mode: 'insensitive' };

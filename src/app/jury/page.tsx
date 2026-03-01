@@ -275,15 +275,15 @@ export default function JuryPage() {
     rating: number,
     rejectionReasons?: string[]
   ) => {
-    const instantFeedback = ratedByMe.find(r => r.neoId === suggestionId)
-      ? setRatedByMe(
-          ratedByMe.map(r =>
-            r.neoId === suggestionId
-              ? { neoId: suggestionId, value: rating }
-              : r
-          )
+    if (ratedByMe.find(r => r.neoId === suggestionId)) {
+      setRatedByMe(
+        ratedByMe.map(r =>
+          r.neoId === suggestionId ? { neoId: suggestionId, value: rating } : r
         )
-      : setRatedByMe([...ratedByMe, { neoId: suggestionId, value: rating }]);
+      );
+    } else {
+      setRatedByMe([...ratedByMe, { neoId: suggestionId, value: rating }]);
+    }
     const result = await rateNeo(
       suggestionId,
       appUser.id,

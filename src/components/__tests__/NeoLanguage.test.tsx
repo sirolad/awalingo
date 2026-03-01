@@ -59,7 +59,6 @@ describe('NeoLanguage Component', () => {
 
     // Check if the radio button for Igbo is selected (or has the visual indicator)
     // The component uses conditional rendering for the selected state indicator
-    const igboButton = screen.getByText('Igbo').closest('button');
     // We can check if the visual indicator div exists inside the button
     // The selected indicator is a div with bg-[#111111]
     // But testing by class name is brittle.

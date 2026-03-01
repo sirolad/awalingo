@@ -63,7 +63,7 @@ const getMetricsBase = (
 export default function AdminPage() {
   const router = useRouter();
   const { appUser, isLoading: authLoading } = useAuth();
-  const { role, can } = usePermissions();
+  const { can } = usePermissions();
   const [questionCount, setQuestionCount] = useState<number | string>('—');
   const [userCount, setUserCount] = useState<number | string>('—');
   const [pendingCount, setPendingCount] = useState<number | string>('—');

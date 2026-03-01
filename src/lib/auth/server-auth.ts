@@ -110,7 +110,7 @@ export async function getAuthContext() {
 
     const role = await getUserRole(user.id);
     return { user, role };
-  } catch (error) {
+  } catch {
     return { user: null, role: null };
   }
 }

@@ -11,6 +11,7 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { Edit2, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConceptDialog } from './ConceptDialog';
+import { formatDistanceToNow } from 'date-fns';
 
 export function AdminConceptList() {
   const [concepts, setConcepts] = useState<AdminConceptData[]>([]);
@@ -183,7 +184,9 @@ export function AdminConceptList() {
                       </span>
                     </td>
                     <td className="p-4 align-top text-neutral-600 dark:text-neutral-400 hidden sm:table-cell text-sm">
-                      {new Date(concept.createdAt).toLocaleDateString()}
+                      {formatDistanceToNow(new Date(concept.createdAt), {
+                        addSuffix: true,
+                      })}
                     </td>
                     <td className="p-4 align-top text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">

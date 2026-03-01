@@ -6,7 +6,6 @@ import {
   deleteAdminConcept,
 } from '../admin-concepts';
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
 
 vi.mock('@/lib/prisma', () => ({
   __esModule: true,

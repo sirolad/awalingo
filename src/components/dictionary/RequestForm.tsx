@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/select';
 import { submitRequest } from '@/actions/dictionary';
 import { requestSchema } from '@/lib/schemas/dictionary';
-import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 // Extended schema to match the form fields exactly
@@ -86,7 +85,7 @@ export function RequestForm({
   const [selectedSourceId, setSelectedSourceId] = useState<number>(englishId);
 
   const form = useForm<RequestFormValues>({
-    resolver: zodResolver(requestSchema) as any,
+    resolver: zodResolver(requestSchema),
     mode: 'onChange',
     defaultValues: {
       word: '',
