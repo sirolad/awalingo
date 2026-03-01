@@ -127,6 +127,48 @@ export default function CuratorTestPage() {
     timeLeft,
   ]);
 
+  const submitTest = async (finalAnswers: string[]) => {
+    if (!appUser) return;
+    setIsSubmitting(true);
+
+    const correctCount = finalAnswers.filter(
+      (answer, index) => answer === questions[index].correctAnswer
+    ).length;
+
+    const submitResult = await submitQuizAttempt(
+      appUser.id,
+      correctCount,
+      questions.length
+    );
+
+    if (submitResult.success) {
+      router.push(
+        `/curator-test/result?passed=${submitResult.passed}&score=${correctCount}`
+      );
+    } else {
+      setIsSubmitting(false);
+      alert('Failed to submit results. Please try again.');
+    }
+  };
+
+  // Auto-submit effect when timer reaches 0
+  useEffect(() => {
+    if (timeLeft === 0 && !isSubmitting && questions.length > 0) {
+      const finalAnswers = [...answers];
+      if (selectedAnswer && currentQuestionIndex === finalAnswers.length) {
+        finalAnswers[currentQuestionIndex] = selectedAnswer;
+      }
+      submitTest(finalAnswers);
+    }
+  }, [
+    timeLeft,
+    isSubmitting,
+    questions.length,
+    answers,
+    selectedAnswer,
+    currentQuestionIndex,
+  ]);
+
   if (authLoading || isChecking) {
     return (
       <div className="min-h-screen bg-neutral-100 dark:bg-neutral-950 flex flex-col justify-center items-center">
@@ -231,48 +273,6 @@ export default function CuratorTestPage() {
   const handleSelectAnswer = (value: string) => {
     setSelectedAnswer(value);
   };
-
-  const submitTest = async (finalAnswers: string[]) => {
-    if (!appUser) return;
-    setIsSubmitting(true);
-
-    const correctCount = finalAnswers.filter(
-      (answer, index) => answer === questions[index].correctAnswer
-    ).length;
-
-    const submitResult = await submitQuizAttempt(
-      appUser.id,
-      correctCount,
-      totalQuestions
-    );
-
-    if (submitResult.success) {
-      router.push(
-        `/curator-test/result?passed=${submitResult.passed}&score=${correctCount}`
-      );
-    } else {
-      setIsSubmitting(false);
-      alert('Failed to submit results. Please try again.');
-    }
-  };
-
-  // Auto-submit effect when timer reaches 0
-  useEffect(() => {
-    if (timeLeft === 0 && !isSubmitting && questions.length > 0) {
-      const finalAnswers = [...answers];
-      if (selectedAnswer && currentQuestionIndex === finalAnswers.length) {
-        finalAnswers[currentQuestionIndex] = selectedAnswer;
-      }
-      submitTest(finalAnswers);
-    }
-  }, [
-    timeLeft,
-    isSubmitting,
-    questions.length,
-    answers,
-    selectedAnswer,
-    currentQuestionIndex,
-  ]);
 
   const handleNext = async () => {
     if (!selectedAnswer || !appUser) return;
