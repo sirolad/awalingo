@@ -232,6 +232,7 @@ export default function DictionaryPage() {
                       word={getActiveWord(word)}
                       translation={getSecondaryWord(word)}
                       definition={word.meaning}
+                      partOfSpeech={word.partOfSpeech}
                       languageName={
                         activeLanguage === 'english'
                           ? userNeoCommunity?.name || 'Awalingo'
