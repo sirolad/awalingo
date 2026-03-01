@@ -45,12 +45,50 @@ import {
 } from '@/actions/quiz';
 import { getTargetLanguages } from '@/actions/language';
 import { LanguageColumns } from '@/types';
+import { Prisma } from '@/generated/prisma';
 interface EditableQuestion {
   id: number;
   text: string;
   options: QuizOption[];
   correctAnswer: string;
   isActive: boolean;
+}
+
+function normalizeQuizOptions(options: Prisma.JsonValue): QuizOption[] {
+  if (!Array.isArray(options)) return [];
+  return options
+    .map(item => {
+      if (
+        typeof item === 'object' &&
+        item !== null &&
+        'label' in item &&
+        'value' in item
+      ) {
+        const label = (item as { label?: unknown }).label;
+        const value = (item as { value?: unknown }).value;
+        if (typeof label === 'string' && typeof value === 'string') {
+          return { label, value };
+        }
+      }
+      return null;
+    })
+    .filter((item): item is QuizOption => item !== null);
+}
+
+function normalizeQuestion(question: {
+  id: number;
+  text: string;
+  options: Prisma.JsonValue;
+  correctAnswer: string;
+  isActive: boolean;
+}): EditableQuestion {
+  return {
+    id: question.id,
+    text: question.text,
+    options: normalizeQuizOptions(question.options),
+    correctAnswer: question.correctAnswer,
+    isActive: question.isActive,
+  };
 }
 
 export default function AdminQuizPage() {
@@ -125,7 +163,7 @@ export default function AdminQuizPage() {
           debouncedSearch
         );
         if (res.success && res.questions) {
-          setExistingQuestions(res.questions);
+          setExistingQuestions(res.questions.map(normalizeQuestion));
           setTotalPages(res.pagination?.totalPages || 1);
         }
         setIsLoadingQuestions(false);
@@ -151,7 +189,7 @@ export default function AdminQuizPage() {
 
     if (res.success && res.question) {
       setExistingQuestions(prev =>
-        prev.map(q => (q.id === id ? res.question : q))
+        prev.map(q => (q.id === id ? normalizeQuestion(res.question) : q))
       );
       setEditingQuestionId(null);
     } else {

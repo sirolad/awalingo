@@ -11,7 +11,7 @@ export interface AuditLogEntry {
   userId: string;
   action: string;
   resourceId?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 }
 
 /**

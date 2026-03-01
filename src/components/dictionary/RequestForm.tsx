@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useEffect, useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
@@ -85,7 +85,7 @@ export function RequestForm({
   const [selectedSourceId, setSelectedSourceId] = useState<number>(englishId);
 
   const form = useForm<RequestFormValues>({
-    resolver: zodResolver(requestSchema),
+    resolver: zodResolver(requestSchema) as Resolver<RequestFormValues>,
     mode: 'onChange',
     defaultValues: {
       word: '',
