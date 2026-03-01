@@ -41,6 +41,7 @@ export async function getAllRequests(limit = 10, offset = 0) {
         sourceLanguage: true,
         targetLanguage: true,
         partOfSpeech: true,
+        reviewedBy: true,
       },
       take: limit,
       skip: offset,
@@ -109,9 +110,14 @@ class ReviewActions {
             },
           });
 
-          // 3. Delete the request — superseded by the Term.
-          // `domains_on_requests` rows are cleaned up via ON DELETE CASCADE.
-          await tx.translationRequest.delete({ where: { id: requestId } });
+          // 3. Keep the request for history — mark as APPROVED and track reviewer
+          await tx.translationRequest.update({
+            where: { id: requestId },
+            data: {
+              status: 'APPROVED',
+              reviewedById: user.id,
+            },
+          });
         });
 
         await logAudit({
@@ -127,6 +133,7 @@ class ReviewActions {
           data: {
             status,
             rejectionReason: reason,
+            reviewedById: user.id,
           },
         });
 

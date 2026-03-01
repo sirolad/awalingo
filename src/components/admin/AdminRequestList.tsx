@@ -40,6 +40,9 @@ interface Request {
   user: {
     name: string | null;
   };
+  reviewedBy?: {
+    name: string | null;
+  };
   targetLanguage: {
     name: string;
   };
@@ -170,6 +173,7 @@ export function AdminRequestList() {
                 <th className="py-3 px-4 font-semibold text-sm">
                   Rejection Reason
                 </th>
+                <th className="py-3 px-4 font-semibold text-sm">Reviewer</th>
                 <th className="py-3 px-4 font-semibold text-sm">Date</th>
                 <th className="py-3 px-4 font-semibold text-sm text-center">
                   Actions
@@ -245,6 +249,16 @@ export function AdminRequestList() {
                       ) : (
                         <span className="text-neutral-400 italic">—</span>
                       )}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-neutral-600 dark:text-neutral-400">
+                      {req.reviewedBy?.name ||
+                        (req.status !== 'PENDING' ? (
+                          <span className="text-neutral-400 italic">
+                            Unknown
+                          </span>
+                        ) : (
+                          <span className="text-neutral-400 italic">—</span>
+                        ))}
                     </td>
                     <td className="py-3 px-4 text-sm text-neutral-500 whitespace-nowrap">
                       {new Date(req.createdAt).toLocaleDateString()}
