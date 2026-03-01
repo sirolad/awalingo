@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { requestSchema, SubmitRequestState } from '@/lib/schemas/dictionary';
+import { Prisma } from '@/generated/prisma';
 import { requireAuth } from '@/lib/auth/server-auth';
 
 export async function submitRequest(
@@ -164,32 +165,68 @@ export interface DictionaryTerm {
 }
 
 /**
- * Fetch all Terms for a given language, alphabetically ordered.
+ * Fetch a paginated chunk of Terms for a given language, optionally filtered by search or starting alphabet.
  * The `translation` field resolves the sibling term in `communityLanguageId`
  * via the shared conceptId — powering the dictionary page language switch.
  */
 export async function getDictionaryTerms(
   languageId: number,
-  communityLanguageId: number
-): Promise<DictionaryTerm[]> {
-  const terms = await prisma.term.findMany({
-    where: { languageId },
-    orderBy: { text: 'asc' },
-    include: {
-      partOfSpeech: true,
-      domains: { include: { domain: true } },
-      concept: {
-        include: {
-          terms: {
-            where: { languageId: communityLanguageId },
-            take: 1,
+  communityLanguageId: number,
+  options?: {
+    skip?: number;
+    take?: number;
+    searchQuery?: string;
+    alphabet?: string;
+  }
+): Promise<{ terms: DictionaryTerm[]; hasMore: boolean }> {
+  const {
+    skip = 0,
+    take = 20,
+    searchQuery = '',
+    alphabet = '',
+  } = options || {};
+
+  const whereClause: Prisma.TermWhereInput = { languageId };
+
+  // Apply search query across text and meaning
+  if (searchQuery) {
+    whereClause.OR = [
+      { text: { contains: searchQuery, mode: 'insensitive' } },
+      { meaning: { contains: searchQuery, mode: 'insensitive' } },
+    ];
+  }
+
+  if (alphabet) {
+    whereClause.text = {
+      ...(typeof whereClause.text === 'object' ? whereClause.text : {}),
+      startsWith: alphabet,
+      mode: 'insensitive',
+    };
+  }
+
+  const [terms, total] = await Promise.all([
+    prisma.term.findMany({
+      where: whereClause,
+      orderBy: { text: 'asc' },
+      skip,
+      take,
+      include: {
+        partOfSpeech: true,
+        domains: { include: { domain: true } },
+        concept: {
+          include: {
+            terms: {
+              where: { languageId: communityLanguageId },
+              take: 1,
+            },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.term.count({ where: whereClause }),
+  ]);
 
-  return terms.map(term => ({
+  const mappedTerms = terms.map(term => ({
     id: term.id,
     text: term.text,
     meaning: term.meaning,
@@ -198,6 +235,27 @@ export async function getDictionaryTerms(
     domains: term.domains.map(d => d.domain.name),
     translation: term.concept.terms[0]?.text ?? null,
   }));
+
+  return {
+    terms: mappedTerms,
+    hasMore: skip + take < total,
+  };
+}
+
+/**
+ * Fetch strictly the available starting letters of all dictionary terms for a language.
+ */
+export async function getAvailableAlphabets(
+  languageId: number
+): Promise<string[]> {
+  // We can select just the first characters of the terms to avoid shipping all terms.
+  const terms = await prisma.term.findMany({
+    where: { languageId },
+    select: { text: true },
+  });
+
+  const letters = new Set(terms.map(t => t.text.charAt(0).toUpperCase()));
+  return Array.from(letters).sort((a, b) => a.localeCompare(b));
 }
 
 export async function getUserProfileForRequest(userId: string) {
