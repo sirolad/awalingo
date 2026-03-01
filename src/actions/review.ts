@@ -183,6 +183,31 @@ class EditActions {
       return { success: false, error: 'Failed to update request' };
     }
   }
+
+  @Authorized('review:requests')
+  static async deleteRequest(requestId: number) {
+    const { user } = await requireAuth();
+
+    try {
+      await prisma.translationRequest.delete({
+        where: { id: requestId },
+      });
+
+      await logAudit({
+        userId: user.id,
+        action: 'review:request:deleted',
+        resourceId: requestId.toString(),
+        metadata: {},
+      });
+
+      revalidatePath('/admin/requests');
+      revalidatePath('/curator/requests');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+      return { success: false, error: 'Failed to delete request' };
+    }
+  }
 }
 
 export async function reviewRequest(
@@ -198,4 +223,8 @@ export async function updateRequest(
   data: { word: string; meaning: string | null; partOfSpeechId: number }
 ) {
   return EditActions.updateRequest(requestId, data);
+}
+
+export async function deleteRequest(requestId: number) {
+  return EditActions.deleteRequest(requestId);
 }
