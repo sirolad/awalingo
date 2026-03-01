@@ -43,6 +43,7 @@ export default function DictionaryPage() {
     'community'
   );
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const getActiveWord = useCallback((word: DictionaryTerm) => word.text, []);
   const getSecondaryWord = useCallback(
@@ -72,11 +73,10 @@ export default function DictionaryPage() {
 
     getAvailableAlphabets(primaryId).then(letters => {
       setAlphabets(letters);
-      if (!currentAlphabet && letters.length > 0 && !searchQuery) {
-        setCurrentAlphabet(letters[0]);
-      } else if (currentAlphabet && !letters.includes(currentAlphabet)) {
-        setCurrentAlphabet(letters.length > 0 ? letters[0] : '');
+      if (currentAlphabet && !letters.includes(currentAlphabet)) {
+        setCurrentAlphabet('');
       }
+      setIsTransitioning(false);
       setInitialLoaded(true);
     });
   }, [activeLanguage, userNeoCommunity, englishLanguageId]);
@@ -84,11 +84,18 @@ export default function DictionaryPage() {
   // 3. Main Fetch for Terms
   const loadTerms = useCallback(
     async (isLoadMore = false) => {
-      if (!userNeoCommunity || !englishLanguageId || !initialLoaded) return;
+      if (
+        !userNeoCommunity ||
+        !englishLanguageId ||
+        !initialLoaded ||
+        isTransitioning
+      )
+        return;
 
       if (isLoadMore) setLoadingMore(true);
       else {
         setLoading(true);
+        setWords([]); // Clear immediately so skeleton handles transition instead of empty state
         skipRef.current = 0; // Reset skip count on new search/filter
       }
 
@@ -122,6 +129,7 @@ export default function DictionaryPage() {
       userNeoCommunity,
       englishLanguageId,
       initialLoaded,
+      isTransitioning,
       activeLanguage,
       searchQuery,
       currentAlphabet,
@@ -153,44 +161,26 @@ export default function DictionaryPage() {
 
   const toggleLanguage = () => {
     if (!userNeoCommunity || !englishLanguageId) return;
+    setIsTransitioning(true);
+    setWords([]);
     setActiveLanguage(prev => (prev === 'community' ? 'english' : 'community'));
     setSearchQuery('');
-    // currentAlphabet will be reset by the alphabet fetch effect if necessary
+    setCurrentAlphabet('');
   };
 
-  if ((loading && words.length === 0) || authLoading || !initialLoaded) {
+  if (authLoading || !initialLoaded) {
     return (
       <Layout variant="home">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Header */}
-          <div className="flex items-center justify-between py-4 md:py-6 lg:py-8">
-            <button
-              onClick={handleGoBack}
-              className="inline-flex items-center text-neutral-950 dark:text-neutral-50 hover:text-primary-800 dark:hover:text-primary-200 transition-colors p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            >
-              <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 mr-2" />
-              <span className="body-small md:body-base font-medium hidden lg:block">
-                Back
-              </span>
-            </button>
-            <span className="heading-4 text-neutral-950 dark:text-neutral-50">
-              AwaDiko {userNeoCommunity ? `${userNeoCommunity.name}` : ''}
-            </span>
-            <div className="flex-shrink-0">
-              <LanguageSwitchTag
-                userNeoCommunity={userNeoCommunity}
-                user={appUser}
-                activeLanguage={activeLanguage}
-                onToggle={toggleLanguage}
-              />
-            </div>
+          <div className="flex justify-between items-center py-4 md:py-6 lg:py-8">
+            <div className="w-24 h-8 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+            <div className="w-32 h-8 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
           </div>
-
           {/* Main Content */}
           <div className="flex-1 space-y-6 md:space-y-8 lg:space-y-10 pb-20 md:pb-8">
             {/* Search Bar Skeleton */}
             <div className="h-12 bg-neutral-200 dark:bg-neutral-800 rounded-full animate-pulse"></div>
-
             <div className="flex space-x-4">
               <div className="flex-1">
                 <DictionaryPageSkeleton />
@@ -245,10 +235,13 @@ export default function DictionaryPage() {
             value={searchQuery}
             onChange={val => {
               setSearchQuery(val);
-              setCurrentAlphabet(val.charAt(0).toUpperCase());
+              setCurrentAlphabet(''); // Clear alphabet when typing to search everything
             }}
             placeholder={`Search ${activeLanguage === 'english' ? 'English' : userNeoCommunity?.name || 'Community'} words`}
-            onClear={() => setSearchQuery('')}
+            onClear={() => {
+              setSearchQuery('');
+              setCurrentAlphabet(''); // Reset to 'All'
+            }}
             className="mb-4 md:mb-6 lg:mb-8"
             iconPosition="right"
             rounded={true}
@@ -258,7 +251,11 @@ export default function DictionaryPage() {
             <div className="flex-1 overflow-auto">
               {/* Words List - Responsive Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-                {filteredWords.length > 0 ? (
+                {(loading && words.length === 0) || isTransitioning ? (
+                  <div className="col-span-full">
+                    <DictionaryPageSkeleton />
+                  </div>
+                ) : filteredWords.length > 0 ? (
                   filteredWords.map((word, index) => (
                     //
                     <NeoDicoWord
@@ -343,24 +340,36 @@ export default function DictionaryPage() {
                 )}
               </div>
             </div>
-            <div className="w-10 shrink-0 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors rounded-full flex-row justify-center px-1">
-              <div className="flex justify-center py-3 w-full">
-                <SortDescIcon className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+            <div className="w-10 shrink-0 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 transition-colors rounded-full flex flex-col items-center py-1">
+              <button
+                onClick={() => setCurrentAlphabet('')}
+                className={`py-3 w-full flex justify-center hover:bg-gray-200 dark:hover:bg-neutral-800 rounded-t-full transition-colors ${currentAlphabet === '' ? 'bg-gray-100 dark:bg-neutral-800' : ''}`}
+                title="Show All"
+              >
+                <SortDescIcon
+                  className={`w-5 h-5 ${currentAlphabet === '' ? 'text-primary-600 dark:text-primary-400' : 'text-neutral-600 dark:text-neutral-400'}`}
+                />
+              </button>
+              <div className="w-full px-1">
+                {alphabets.map(letter => (
+                  <button
+                    key={letter}
+                    onClick={() =>
+                      setCurrentAlphabet(
+                        currentAlphabet === letter ? '' : letter
+                      )
+                    }
+                    className={`w-full py-1 mb-4 text-sm font-medium transition-colors ${
+                      currentAlphabet === letter
+                        ? 'bg-neutral-100 border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-600 text-neutral-900 dark:text-neutral-100 rounded-full'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-full'
+                    }`}
+                  >
+                    {letter}
+                    {letter.toLocaleLowerCase()}
+                  </button>
+                ))}
               </div>
-              {alphabets.map(letter => (
-                <button
-                  key={letter}
-                  onClick={() => setCurrentAlphabet(letter)}
-                  className={`w-full py-1 mb-4 text-sm font-medium transition-colors ${
-                    currentAlphabet === letter
-                      ? 'border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-neutral-100 rounded-full'
-                      : 'text-neutral-600 dark:text-neutral-400 hover:bg-gray-200 dark:hover:bg-neutral-700'
-                  }`}
-                >
-                  {letter}
-                  {letter.toLocaleLowerCase()}
-                </button>
-              ))}
             </div>
           </div>
 
