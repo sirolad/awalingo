@@ -10,7 +10,7 @@ import { requirePermission } from '@/lib/auth/server-auth';
  */
 export function Authorized(permission: Permission) {
   return function (
-    target: any,
+    _target: unknown,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor
   ) {
@@ -20,7 +20,7 @@ export function Authorized(permission: Permission) {
       throw new Error('Authorized decorator can only be used on methods');
     }
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       try {
         await requirePermission(permission);
         return await originalMethod.apply(this, args);

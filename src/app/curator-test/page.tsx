@@ -11,12 +11,34 @@ import {
   submitQuizAttempt,
 } from '@/actions/quiz';
 import { formatDistanceToNow } from 'date-fns';
+import { Prisma } from '@/generated/prisma';
 
 interface Question {
   id: number;
   text: string;
   options: { label: string; value: string }[];
   correctAnswer: string;
+}
+
+function normalizeOptions(options: Prisma.JsonValue): Question['options'] {
+  if (!Array.isArray(options)) return [];
+  return options
+    .map(item => {
+      if (
+        typeof item === 'object' &&
+        item !== null &&
+        'label' in item &&
+        'value' in item
+      ) {
+        const label = (item as { label?: unknown }).label;
+        const value = (item as { value?: unknown }).value;
+        if (typeof label === 'string' && typeof value === 'string') {
+          return { label, value };
+        }
+      }
+      return null;
+    })
+    .filter((item): item is { label: string; value: string } => item !== null);
 }
 
 export default function CuratorTestPage() {
@@ -78,7 +100,14 @@ export default function CuratorTestPage() {
             'No questions are currently available for your target language. Please try again later.'
           );
         } else {
-          setQuestions(questionsResult.questions);
+          setQuestions(
+            questionsResult.questions.map(question => ({
+              id: question.id,
+              text: question.text,
+              options: normalizeOptions(question.options),
+              correctAnswer: question.correctAnswer,
+            }))
+          );
         }
       } else {
         setFetchError(

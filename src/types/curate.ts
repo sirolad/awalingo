@@ -1,6 +1,3 @@
-import { boolean } from 'zod';
-import type { BaseEntity } from './common';
-
 // Neo interface
 export interface Neo {
   (

@@ -48,7 +48,7 @@ export default function VotePage() {
   const [myVotes, setMyVotes] = useState<number[]>([2]);
   const [term, setTerm] = useState<Term>({} as Term);
   const [terms, setTerms] = useState<Term[]>([]);
-  const [loadSuggestionsTrigger, setLoadSuggestionsTrigger] = useState(true);
+  const [, setLoadSuggestionsTrigger] = useState(true);
   const [isWordOfTheDay, setIsWordOfTheDay] = useState(false);
 
   useEffect(() => {

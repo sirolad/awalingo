@@ -9,7 +9,6 @@ import {
 } from '../server-auth';
 import * as supabase from '@/lib/supabase/server';
 import * as authActions from '@/actions/auth';
-import { Role, Permission } from '../permissions';
 
 vi.mock('@/lib/supabase/server', () => ({
   getCurrentUser: vi.fn(),

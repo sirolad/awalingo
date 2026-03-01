@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
 
 /**
  * Audit logging helpers for tracking sensitive operations
@@ -10,7 +11,7 @@ export interface AuditLogEntry {
   userId: string;
   action: string;
   resourceId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Prisma.InputJsonValue;
 }
 
 /**
@@ -51,7 +52,7 @@ export async function getAuditLogs(filters?: {
   limit?: number;
   offset?: number;
 }) {
-  const where: any = {};
+  const where: Prisma.AuditLogWhereInput = {};
 
   if (filters?.userId) {
     where.userId = filters.userId;

@@ -187,9 +187,7 @@ describe('Quiz Server Actions', () => {
   describe('submitQuizAttempt', () => {
     it('should process a failing score without role upgrade', async () => {
       // 2 / 5 = 40%
-      let txCallback: any;
       (prisma.$transaction as any).mockImplementation(async (cb: any) => {
-        txCallback = cb;
         return cb(prisma); // Execute transaction with mock prisma
       });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useActionState, useEffect, useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/select';
 import { submitRequest } from '@/actions/dictionary';
 import { requestSchema } from '@/lib/schemas/dictionary';
-import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 // Extended schema to match the form fields exactly
@@ -86,7 +85,7 @@ export function RequestForm({
   const [selectedSourceId, setSelectedSourceId] = useState<number>(englishId);
 
   const form = useForm<RequestFormValues>({
-    resolver: zodResolver(requestSchema) as any,
+    resolver: zodResolver(requestSchema) as Resolver<RequestFormValues>,
     mode: 'onChange',
     defaultValues: {
       word: '',

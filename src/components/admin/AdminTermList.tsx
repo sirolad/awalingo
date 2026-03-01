@@ -115,7 +115,7 @@ export function AdminTermList() {
       complete: async results => {
         try {
           const formattedTerms = [];
-          for (const row of results.data as any[]) {
+          for (const row of results.data as Record<string, string>[]) {
             const getVal = (key: string) => {
               const actualKey = Object.keys(row).find(
                 k => k.trim().toLowerCase() === key.toLowerCase()
@@ -173,7 +173,7 @@ export function AdminTermList() {
           } else {
             setCsvError(result.error || 'Failed to upload terms');
           }
-        } catch (_err) {
+        } catch {
           setCsvError('Error parsing or submitting CSV file.');
         } finally {
           setIsUploadingCsv(false);

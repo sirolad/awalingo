@@ -184,7 +184,7 @@ describe('curateNeo actions', () => {
       ]);
       (prisma.term.findMany as any).mockResolvedValue([]);
 
-      const result = await getTerms(1);
+      await getTerms(1);
 
       expect(prisma.neo.groupBy).toHaveBeenCalled();
       expect(prisma.term.findMany).toHaveBeenCalled();

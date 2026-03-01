@@ -176,7 +176,7 @@ export async function getCuratorTestQuestions(userId: string) {
       Array<{
         id: number;
         text: string;
-        options: any; // Stored as Json
+        options: Prisma.JsonValue; // Stored as Json
         correctAnswer: string;
         languageId: number;
       }>
@@ -243,9 +243,13 @@ export async function canUserTakeQuiz(
 ): Promise<QuizEligibilityResult> {
   try {
     const result = await QuizEligibility.check(userId);
-    
+
     // Check if the decorator blocked access
-    if (!result.success && result.error && !Object.prototype.hasOwnProperty.call(result, 'canTake')) {
+    if (
+      !result.success &&
+      result.error &&
+      !Object.prototype.hasOwnProperty.call(result, 'canTake')
+    ) {
       return {
         success: false,
         canTake: false,
@@ -254,7 +258,7 @@ export async function canUserTakeQuiz(
         eligibleAt: undefined,
       };
     }
-    
+
     return result as QuizEligibilityResult;
   } catch (error) {
     console.error('Failed to check quiz eligibility:', error);

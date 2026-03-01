@@ -58,7 +58,7 @@ vi.mock('@/lib/supabase/client', () => {
     signUp: vi.fn(() => Promise.resolve({ data: null, error: null })),
     signOut: vi.fn(() => Promise.resolve({ error: null })),
     signInWithOAuth: vi.fn(() => Promise.resolve({ data: null, error: null })),
-    onAuthStateChange: vi.fn(callback => {
+    onAuthStateChange: vi.fn(() => {
       // Don't call the callback immediately to avoid side effects
       return {
         data: {

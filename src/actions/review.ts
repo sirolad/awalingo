@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth/server-auth';
 import { logAudit } from '@/lib/audit';
 import { Authorized } from '@/lib/auth/decorators';
+import { Prisma } from '@/generated/prisma';
 
 type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -33,9 +34,20 @@ export async function getPendingRequests(limit = 10, offset = 0) {
   }
 }
 
-export async function getAllRequests(limit = 10, offset = 0) {
+export async function getAllRequests(limit = 10, offset = 0, search?: string) {
   try {
+    const whereClause: Prisma.TranslationRequestWhereInput = {};
+    if (search) {
+      whereClause.OR = [
+        { word: { contains: search, mode: 'insensitive' } },
+        { meaning: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { rejectionReason: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
     const requests = await prisma.translationRequest.findMany({
+      where: whereClause,
       include: {
         user: true,
         sourceLanguage: true,

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth/server-auth';
 import { revalidatePath } from 'next/cache';
+import { Prisma } from '@/generated/prisma';
 import { z } from 'zod';
 
 export interface AdminTermData {
@@ -34,7 +35,7 @@ export async function getAdminTerms({
     const { user } = await requireAuth();
     if (!user) throw new Error('Unauthorized');
 
-    const whereClause: any = {};
+    const whereClause: Prisma.TermWhereInput = {};
 
     if (search) {
       whereClause.OR = [
@@ -427,11 +428,27 @@ export async function bulkAddAdminTerms(terms: BulkUploadTermInput[]) {
         });
 
         addedCount++;
-      } catch (e: any) {
-        if (e.code === 'P2002') {
+      } catch (e: unknown) {
+        const code =
+          typeof e === 'object' &&
+          e !== null &&
+          'code' in e &&
+          typeof (e as { code?: unknown }).code === 'string'
+            ? (e as { code: string }).code
+            : undefined;
+        if (code === 'P2002') {
           errors.push(`Row "${text}": Already exists in the database.`);
         } else {
-          errors.push(`Row "${text}": Failed to insert. ${e.message}`);
+          const message =
+            typeof e === 'object' &&
+            e !== null &&
+            'message' in e &&
+            typeof (e as { message?: unknown }).message === 'string'
+              ? (e as { message: string }).message
+              : e instanceof Error
+                ? e.message
+                : 'Unknown error';
+          errors.push(`Row "${text}": Failed to insert. ${message}`);
         }
       }
     }
