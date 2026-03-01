@@ -11,15 +11,18 @@ export async function curateNeo(
   let hasError = false;
   const failedSuggestions = [];
   for (let i = 0; i < 5; i++) {
-    if (!formData.get(`suggestions[${i}]`)) {
+    if (
+      !formData.get(`suggestions[${i}].text`) &&
+      !formData.get(`suggestions[${i}].type`)
+    ) {
       continue;
     }
     const validatedFields = curateNeoSchema.safeParse({
       userId: formData.get('userId'),
-      termId: formData.get('termId'),
+      termId: Number(formData.get('termId')),
       type: formData.get(`suggestions[${i}].type`),
       text: formData.get(`suggestions[${i}].text`),
-      audioUrl: formData.get(`suggestions[${i}].audioUrl`),
+      audioUrl: formData.get(`suggestions[${i}].audioUrl`) ?? undefined,
     });
 
     if (!validatedFields.success) {

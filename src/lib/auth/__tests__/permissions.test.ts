@@ -21,7 +21,8 @@ describe('Permission System', () => {
       expect(hasPermission('JUROR', 'manage:users')).toBe(false);
     });
 
-    it('should handle EXPLORER role with no permissions', () => {
+    it('should handle EXPLORER role permissions', () => {
+      expect(hasPermission('EXPLORER', 'take:quiz')).toBe(true);
       expect(hasPermission('EXPLORER', 'review:requests')).toBe(false);
       expect(hasPermission('EXPLORER', 'manage:users')).toBe(false);
     });
@@ -117,10 +118,10 @@ describe('Permission System', () => {
       expect(permissions).toHaveLength(2);
     });
 
-    it('should return empty array for EXPLORER', () => {
+    it('should return correct permissions for EXPLORER', () => {
       const permissions = getRolePermissions('EXPLORER');
-      expect(permissions).toEqual([]);
-      expect(permissions).toHaveLength(0);
+      expect(permissions).toEqual(['take:quiz']);
+      expect(permissions).toHaveLength(1);
     });
 
     it('should return empty array for an invalid role', () => {

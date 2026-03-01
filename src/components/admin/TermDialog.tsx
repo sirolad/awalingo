@@ -91,7 +91,12 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
   }, []);
 
   useEffect(() => {
-    if (termToEdit && isOpen) {
+    if (
+      termToEdit &&
+      isOpen &&
+      languages.length > 0 &&
+      partsOfSpeech.length > 0
+    ) {
       const existingDomains = termToEdit.domains.map(d => d.domain.name);
       setDomains(existingDomains);
       reset({
@@ -119,7 +124,7 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
       setDomainInput('');
       setDomainSuggestions([]);
     }
-  }, [termToEdit, isOpen, reset]);
+  }, [termToEdit, isOpen, reset, languages.length, partsOfSpeech.length]);
 
   const [conceptResults, setConceptResults] = useState<
     { id: number; gloss: string }[]
@@ -376,6 +381,7 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
           </label>
           <select
             className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+            value={watch('languageId') || 0}
             {...register('languageId', { valueAsNumber: true })}
           >
             <option value={0} disabled>
@@ -400,6 +406,7 @@ export function TermDialog({ isOpen, onClose, termToEdit }: TermDialogProps) {
           </label>
           <select
             className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+            value={watch('partOfSpeechId') || 0}
             {...register('partOfSpeechId', { valueAsNumber: true })}
           >
             <option value={0} disabled>

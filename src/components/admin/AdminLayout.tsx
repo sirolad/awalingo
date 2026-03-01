@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, href: '/admin', active: true },
@@ -225,9 +226,11 @@ export function AdminLayout({
               </div>
             )}
 
+            <ThemeToggle />
+
             <button
               onClick={() => router.push('/home')}
-              className="p-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors hidden sm:flex"
+              className="p-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors flex"
               title="Go Home"
             >
               <Home className="w-5 h-5" />
@@ -235,7 +238,7 @@ export function AdminLayout({
             {/* Avatar (desktop, mobile already has sidebar footer) */}
             <button
               onClick={() => router.push('/profile')}
-              className="w-9 h-9 rounded-full overflow-hidden border-2 border-neutral-200 dark:border-neutral-700 hover:opacity-80 transition-opacity items-center justify-center bg-neutral-100 dark:bg-neutral-800 shrink-0 hidden sm:flex"
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-neutral-200 dark:border-neutral-700 hover:opacity-80 transition-opacity items-center justify-center bg-neutral-100 dark:bg-neutral-800 shrink-0 flex"
             >
               {appUser.avatar ? (
                 <Image
