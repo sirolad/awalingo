@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, BookPlus, SortDescIcon } from 'lucide-react';
+import { ArrowLeft, BookPlus, SortDescIcon, Loader2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
@@ -12,97 +12,153 @@ import { LanguageSwitchTag } from '@/components/ui/LanguageSwitchTag';
 import { NeoDicoWord } from '@/components/ui/NeoDicoWord';
 import { DictionaryPageSkeleton } from '@/components/dictionary/DictionaryPageSkeleton';
 import Image from 'next/image';
-import { getDictionaryTerms, type DictionaryTerm } from '@/actions/dictionary';
+import {
+  getDictionaryTerms,
+  getAvailableAlphabets,
+  type DictionaryTerm,
+} from '@/actions/dictionary';
 
 // English language ID is deterministic (seeded with code 'eng').
 // We resolve it server-side inside getDictionaryTerms, but for the page we
 // need it to swap the active language. Fetched once on mount.
-// need it to swap the active language. Fetched once on mount.
 export default function DictionaryPage() {
   const router = useRouter();
   const { appUser, isLoading: authLoading, userNeoCommunity } = useAuth();
+
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [words, setWords] = useState<DictionaryTerm[]>([]);
+  const [alphabets, setAlphabets] = useState<string[]>([]);
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const skipRef = useRef(0);
+
   const [englishLanguageId, setEnglishLanguageId] = useState<number | null>(
     null
   );
-  const [currentAlphabet, setCurrentAlphabet] = useState('A');
+  const [currentAlphabet, setCurrentAlphabet] = useState('');
   const [activeLanguage, setActiveLanguage] = useState<'community' | 'english'>(
     'community'
   );
-  const getActiveWord = useCallback((word: DictionaryTerm) => word.text, []);
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
+  const getActiveWord = useCallback((word: DictionaryTerm) => word.text, []);
   const getSecondaryWord = useCallback(
     (word: DictionaryTerm) => word.translation ?? '',
     []
   );
 
-  const alphabets = Array.from(
-    new Set(words.map(w => getActiveWord(w).charAt(0).toUpperCase()))
-  ).sort((a, b) => a.localeCompare(b));
   const handleGoBack = () => {
     router.push('/home');
   };
 
-  const loadTerms = useCallback(
-    async (primaryLanguageId: number, secondaryLanguageId: number) => {
-      setLoading(true);
-      const data = await getDictionaryTerms(
-        primaryLanguageId,
-        secondaryLanguageId
-      );
-      setWords(data);
-
-      // Auto-select the first available alphabet letter if any words exist
-      if (data.length > 0) {
-        const firstLetter = getActiveWord(data[0]).charAt(0).toUpperCase();
-        setCurrentAlphabet(firstLetter);
-      } else {
-        setCurrentAlphabet('');
-      }
-
-      setLoading(false);
-    },
-    []
-  );
-
+  // 1. Fetch English ID (Run Once)
   useEffect(() => {
-    if (authLoading) return;
-    if (!appUser) {
-      router.push('/signin');
-      return;
-    }
-    if (!userNeoCommunity) return;
-
-    const communityId = Number(userNeoCommunity.id);
-
-    // Resolve English language ID then load terms
+    if (authLoading || !appUser || englishLanguageId) return;
     fetch('/api/language/english')
       .then(r => r.json())
-      .then((data: { id: number }) => {
-        setEnglishLanguageId(data.id);
-        // Default: community language as primary view
-        loadTerms(communityId, data.id);
-      })
-      .catch(() => {
-        loadTerms(communityId, communityId);
+      .then(data => setEnglishLanguageId(data.id))
+      .catch(console.error);
+  }, [authLoading, appUser, englishLanguageId]);
+
+  // 2. Fetch Alphabets whenever Active Language changes
+  useEffect(() => {
+    if (!userNeoCommunity || !englishLanguageId) return;
+    const communityId = Number(userNeoCommunity.id);
+    const primaryId =
+      activeLanguage === 'community' ? communityId : englishLanguageId;
+
+    getAvailableAlphabets(primaryId).then(letters => {
+      setAlphabets(letters);
+      if (!currentAlphabet && letters.length > 0 && !searchQuery) {
+        setCurrentAlphabet(letters[0]);
+      } else if (currentAlphabet && !letters.includes(currentAlphabet)) {
+        setCurrentAlphabet(letters.length > 0 ? letters[0] : '');
+      }
+      setInitialLoaded(true);
+    });
+  }, [activeLanguage, userNeoCommunity, englishLanguageId]);
+
+  // 3. Main Fetch for Terms
+  const loadTerms = useCallback(
+    async (isLoadMore = false) => {
+      if (!userNeoCommunity || !englishLanguageId || !initialLoaded) return;
+
+      if (isLoadMore) setLoadingMore(true);
+      else {
+        setLoading(true);
+        skipRef.current = 0; // Reset skip count on new search/filter
+      }
+
+      const communityId = Number(userNeoCommunity.id);
+      const primaryId =
+        activeLanguage === 'community' ? communityId : englishLanguageId;
+      const secondaryId =
+        activeLanguage === 'community' ? englishLanguageId : communityId;
+      const skip = skipRef.current;
+
+      const data = await getDictionaryTerms(primaryId, secondaryId, {
+        skip,
+        take: 20,
+        searchQuery,
+        alphabet: currentAlphabet,
       });
-  }, [router, appUser, authLoading, userNeoCommunity, loadTerms]);
+
+      if (isLoadMore) {
+        setWords(prev => [...prev, ...data.terms]);
+      } else {
+        setWords(data.terms);
+      }
+
+      setHasMore(data.hasMore);
+      skipRef.current = skip + data.terms.length;
+
+      if (isLoadMore) setLoadingMore(false);
+      else setLoading(false);
+    },
+    [
+      userNeoCommunity,
+      englishLanguageId,
+      initialLoaded,
+      activeLanguage,
+      searchQuery,
+      currentAlphabet,
+    ]
+  );
+
+  // Trigger main fetch on dependencies (Search, Alphabet, Language)
+  useEffect(() => {
+    loadTerms(false);
+  }, [loadTerms]);
+
+  // Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadTerms(true);
+        }
+      },
+      { threshold: 0.1 } // Fire a bit earlier than 1.0
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadTerms]);
 
   const toggleLanguage = () => {
     if (!userNeoCommunity || !englishLanguageId) return;
-    const communityId = Number(userNeoCommunity.id);
-    if (activeLanguage === 'community') {
-      setActiveLanguage('english');
-      loadTerms(englishLanguageId, communityId);
-    } else {
-      setActiveLanguage('community');
-      loadTerms(communityId, englishLanguageId);
-    }
+    setActiveLanguage(prev => (prev === 'community' ? 'english' : 'community'));
+    setSearchQuery('');
+    // currentAlphabet will be reset by the alphabet fetch effect if necessary
   };
 
-  if (loading || authLoading) {
+  if ((loading && words.length === 0) || authLoading || !initialLoaded) {
     return (
       <Layout variant="home">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -152,29 +208,7 @@ export default function DictionaryPage() {
     return null;
   }
 
-  const filteredWords = words
-    .filter(word => {
-      const displayWord = getActiveWord(word);
-      const secondaryWord = getSecondaryWord(word);
-
-      const matchesSearch =
-        searchQuery === '' ||
-        displayWord.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        secondaryWord.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        word.meaning.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesAlphabet =
-        currentAlphabet === '' ||
-        displayWord.toUpperCase().startsWith(currentAlphabet.toUpperCase());
-
-      return matchesSearch && matchesAlphabet;
-    })
-    .sort((a, b) => {
-      // Sort alphabetically by the ACTIVE word
-      const wordA = getActiveWord(a);
-      const wordB = getActiveWord(b);
-      return wordA.localeCompare(wordB);
-    });
+  const filteredWords = words;
 
   return (
     <Layout variant="home">
@@ -289,6 +323,23 @@ export default function DictionaryPage() {
                       </Button>
                     )}
                   </motion.div>
+                )}
+
+                {/* Infinite Scroll Sentinel */}
+                {hasMore && (
+                  <div
+                    ref={observerTarget}
+                    className="col-span-full py-8 flex justify-center items-center h-20"
+                  >
+                    {loadingMore ? (
+                      <div className="flex animate-pulse items-center gap-2 text-neutral-500">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="text-sm font-medium">
+                          Loading more words...
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
                 )}
               </div>
             </div>

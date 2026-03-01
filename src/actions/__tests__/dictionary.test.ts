@@ -264,8 +264,8 @@ describe('dictionary actions', () => {
 
       const result = await getDictionaryTerms(1, 2);
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
+      expect(result.terms).toHaveLength(1);
+      expect(result.terms[0]).toEqual({
         id: 1,
         text: 'hello',
         meaning: 'greeting',
@@ -291,7 +291,7 @@ describe('dictionary actions', () => {
 
       const result = await getDictionaryTerms(1, 2);
 
-      expect(result[0].translation).toBeNull();
+      expect(result.terms[0].translation).toBeNull();
     });
   });
 
